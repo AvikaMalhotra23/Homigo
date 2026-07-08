@@ -311,13 +311,6 @@ fun PremiumSelectedCard(
         label = "scale"
     )
 
-    // Animate shadow/elevation
-    val elevation by animateDpAsState(
-        targetValue = if (selected) 8.dp else 2.dp,
-        animationSpec = tween(durationMillis = 300),
-        label = "elevation"
-    )
-
     // Shine animation offset (runs continuously if selected)
     val infiniteTransition = rememberInfiniteTransition(label = "shine")
     val shineOffset by if (selected) {
@@ -338,7 +331,7 @@ fun PremiumSelectedCard(
         modifier = modifier
             .graphicsLayer(scaleX = scale, scaleY = scale)
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = elevation),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (selected) {
