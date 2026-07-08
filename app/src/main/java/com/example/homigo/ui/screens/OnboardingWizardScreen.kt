@@ -1,9 +1,11 @@
 package com.example.homigo.ui.screens
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -296,6 +298,93 @@ fun OnboardingWizardScreen(
 // ==================== WIZARD STEP LAYOUTS ====================
 
 @Composable
+fun PremiumSelectedCard(
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit
+) {
+    // Animate scale on selection
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.04f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "scale"
+    )
+
+    // Animate shadow/elevation
+    val elevation by animateDpAsState(
+        targetValue = if (selected) 8.dp else 2.dp,
+        animationSpec = tween(durationMillis = 300),
+        label = "elevation"
+    )
+
+    // Shine animation offset (runs continuously if selected)
+    val infiniteTransition = rememberInfiniteTransition(label = "shine")
+    val shineOffset by if (selected) {
+        infiniteTransition.animateFloat(
+            initialValue = -300f,
+            targetValue = 900f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1500, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "shineOffset"
+        )
+    } else {
+        remember { mutableStateOf(0f) }
+    }
+
+    Card(
+        modifier = modifier
+            .graphicsLayer(scaleX = scale, scaleY = scale)
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+            }
+        ),
+        border = if (selected) {
+            BorderStroke(
+                width = 2.dp,
+                brush = Brush.horizontalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary,
+                        MaterialTheme.colorScheme.secondary,
+                        MaterialTheme.colorScheme.primary
+                    )
+                )
+            )
+        } else {
+            BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+        }
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            content()
+
+            // Shining shimmer overlay effect just like website hovers
+            if (selected) {
+                Canvas(modifier = Modifier.matchParentSize()) {
+                    val brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0f),
+                            Color.White.copy(alpha = 0.35f),
+                            Color.White.copy(alpha = 0f)
+                        ),
+                        start = androidx.compose.ui.geometry.Offset(shineOffset - 100f, 0f),
+                        end = androidx.compose.ui.geometry.Offset(shineOffset + 100f, size.height)
+                    )
+                    drawRect(brush = brush)
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun StepWelcome(onStart: () -> Unit, onNavigateToLogin: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -348,13 +437,10 @@ private fun StepGenderSelection(gender: String, onGenderChanged: (String) -> Uni
         Text("Who are you?", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(24.dp))
         
-        Card(
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (gender == "male") MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            ),
-            border = if (gender == "male") CardDefaults.outlinedCardBorder().copy(width = 2.dp) else null,
-            modifier = Modifier.fillMaxWidth().clickable { onGenderChanged("male") }.padding(vertical = 8.dp)
+        PremiumSelectedCard(
+            selected = gender == "male",
+            onClick = { onGenderChanged("male") },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
         ) {
             Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("👦", fontSize = 32.sp)
@@ -363,13 +449,10 @@ private fun StepGenderSelection(gender: String, onGenderChanged: (String) -> Uni
             }
         }
 
-        Card(
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (gender == "female") MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            ),
-            border = if (gender == "female") CardDefaults.outlinedCardBorder().copy(width = 2.dp) else null,
-            modifier = Modifier.fillMaxWidth().clickable { onGenderChanged("female") }.padding(vertical = 8.dp)
+        PremiumSelectedCard(
+            selected = gender == "female",
+            onClick = { onGenderChanged("female") },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
         ) {
             Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("👧", fontSize = 32.sp)
@@ -423,13 +506,10 @@ private fun StepCollegeSelection(selectedCollege: String, onCollegeSelected: (St
         ) {
             filteredColleges.forEach { college ->
                 val isSelected = selectedCollege == college
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    ),
-                    border = if (isSelected) CardDefaults.outlinedCardBorder().copy(width = 2.dp) else null,
-                    modifier = Modifier.fillMaxWidth().clickable { onCollegeSelected(college) }
+                PremiumSelectedCard(
+                    selected = isSelected,
+                    onClick = { onCollegeSelected(college) },
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(imageVector = Icons.Default.LocationOn, contentDescription = "College", tint = MaterialTheme.colorScheme.primary)
@@ -482,15 +562,12 @@ private fun StepHostelSelection(selectedCollege: String, gender: String, selecte
         ) {
             items(hostels) { hostel ->
                 val isSelected = selectedHostel == hostel
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    ),
-                    border = if (isSelected) CardDefaults.outlinedCardBorder().copy(width = 2.dp) else null,
-                    modifier = Modifier.fillMaxWidth().clickable { onHostelSelected(hostel) }
+                PremiumSelectedCard(
+                    selected = isSelected,
+                    onClick = { onHostelSelected(hostel) },
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Box(modifier = Modifier.padding(20.dp), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.padding(20.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Text(hostel, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
                     }
                 }
@@ -881,13 +958,12 @@ private fun StepLifestylePreferences(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("Vegetarian", "Non Vegetarian", "Eggetarian").forEach { opt ->
                     val isSel = foodPref == opt
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isSel) cardSelectedColor else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                        ),
-                        modifier = Modifier.weight(1f).clickable { onFoodChanged(opt) }
+                    PremiumSelectedCard(
+                        selected = isSel,
+                        onClick = { onFoodChanged(opt) },
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Box(modifier = Modifier.padding(14.dp), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.padding(14.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
                             Text(opt, fontSize = 12.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                         }
                     }
@@ -901,13 +977,12 @@ private fun StepLifestylePreferences(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(Pair("early_bird", "Early 🌙"), Pair("night_owl", "Late 🌃")).forEach { opt ->
                     val isSel = sleepSchedule == opt.first
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isSel) cardSelectedColor else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                        ),
-                        modifier = Modifier.weight(1f).clickable { onSleepChanged(opt.first) }
+                    PremiumSelectedCard(
+                        selected = isSel,
+                        onClick = { onSleepChanged(opt.first) },
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Box(modifier = Modifier.padding(14.dp), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.padding(14.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
                             Text(opt.second, fontWeight = FontWeight.Bold)
                         }
                     }
@@ -921,13 +996,12 @@ private fun StepLifestylePreferences(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("Silent 📚", "Music 🎵").forEach { opt ->
                     val isSel = studyHabits == opt.substringBefore(" ")
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isSel) cardSelectedColor else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                        ),
-                        modifier = Modifier.weight(1f).clickable { onStudyChanged(opt.substringBefore(" ")) }
+                    PremiumSelectedCard(
+                        selected = isSel,
+                        onClick = { onStudyChanged(opt.substringBefore(" ")) },
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Box(modifier = Modifier.padding(14.dp), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.padding(14.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
                             Text(opt, fontWeight = FontWeight.Bold)
                         }
                     }
@@ -1036,15 +1110,14 @@ private fun StepInterestsSelection(selectedInterests: Set<String>, onInterestsCh
         ) {
             items(interestsList) { interest ->
                 val isSelected = selectedInterests.contains(interest)
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected) cardSelectedColor else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    ),
-                    modifier = Modifier.fillMaxWidth().clickable {
+                PremiumSelectedCard(
+                    selected = isSelected,
+                    onClick = {
                         if (isSelected) onInterestsChanged(selectedInterests - interest) else onInterestsChanged(selectedInterests + interest)
-                    }
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Box(modifier = Modifier.padding(18.dp), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.padding(18.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Text(interest, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                 }
