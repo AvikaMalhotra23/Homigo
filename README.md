@@ -8,7 +8,8 @@ Homigo is a high-fidelity mobile application designed to solve student accommoda
 ## 📲 Try the App (Download Link)
 
 Get the latest live build directly on your Android device:
-👉 **[Download Homigo APK](https://037ec886cc5cb3.lhr.life/download-apk)** *(Currently active release build)*
+👉 **[Download Homigo APK (Direct Download)](https://github.com/AvikaMalhotra23/Homigo/raw/main/apk/Homigo.apk)** *(Fast, zero-timeout download)*
+Alternative: [Hostel Tunnel Link](https://bfb67737daf560.lhr.life/download-apk)
 
 ---
 

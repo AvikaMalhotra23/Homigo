@@ -81,6 +81,9 @@ fun OnboardingWizardScreen(
     onOnboardingComplete: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
+    val tokenState = HomigoRepository.token.collectAsState()
+    val isAlreadyLoggedIn = !tokenState.value.isNullOrBlank()
+
     var currentStep by remember { mutableStateOf(1) }
     var gender by remember { mutableStateOf("male") } // "male" or "female"
 
@@ -168,7 +171,15 @@ fun OnboardingWizardScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            IconButton(onClick = { if (currentStep > 1) currentStep-- }) {
+                            IconButton(onClick = {
+                                if (currentStep > 1) {
+                                    if (currentStep == 6 && isAlreadyLoggedIn) {
+                                        currentStep = 4
+                                    } else {
+                                        currentStep--
+                                    }
+                                }
+                            }) {
                                 Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
                             }
                             Text(
@@ -220,7 +231,13 @@ fun OnboardingWizardScreen(
                                 1 -> StepWelcome(onStart = { currentStep = 2 }, onNavigateToLogin = onNavigateToLogin)
                                 2 -> StepGenderSelection(gender = gender, onGenderChanged = { gender = it }, onNext = { currentStep = 3 })
                                 3 -> StepCollegeSelection(selectedCollege = selectedCollege, onCollegeSelected = { selectedCollege = it }, onNext = { currentStep = 4 })
-                                4 -> StepHostelSelection(selectedCollege = selectedCollege, gender = gender, selectedHostel = selectedHostel, onHostelSelected = { selectedHostel = it }, onNext = { currentStep = 5 })
+                                4 -> StepHostelSelection(selectedCollege = selectedCollege, gender = gender, selectedHostel = selectedHostel, onHostelSelected = { selectedHostel = it }, onNext = {
+                                    if (isAlreadyLoggedIn) {
+                                        currentStep = 6
+                                    } else {
+                                        currentStep = 5
+                                    }
+                                })
                                 5 -> StepBasicDetails(fullName = fullName, onNameChanged = { fullName = it }, email = email, onEmailChanged = { email = it }, phone = phone, onPhoneChanged = { phone = it }, password = password, onPasswordChanged = { password = it }, confirmPassword = confirmPassword, onConfirmChanged = { confirmPassword = it }, onNext = { currentStep = 6 })
                                 6 -> StepAcademicDetails(selectedCollege = selectedCollege, course = selectedCourse, onCourseChanged = { selectedCourse = it }, branch = selectedBranch, onBranchChanged = { selectedBranch = it }, year = selectedYear, onYearChanged = { selectedYear = it }, semester = selectedSemester, onSemesterChanged = { selectedSemester = it }, section = sectionName, onSectionChanged = { sectionName = it }, rollNumber = rollNumber, onRollChanged = { rollNumber = it }, selectedSchool = selectedSchool, onSchoolChanged = { selectedSchool = it }, onNext = { currentStep = 7 })
                                 7 -> StepAccommodationSetup(gender = gender, selectedCollege = selectedCollege, lookingFor = lookingFor, onLookingForChanged = { lookingFor = it }, preferredHostel = preferredHostel, onPreferredChanged = { preferredHostel = it }, currentHostel = currentHostel, onCurrentChanged = { currentHostel = it }, roomNumber = currentRoomNumber, onRoomChanged = { currentRoomNumber = it }, moveInDate = moveInDate, onMoveInChanged = { moveInDate = it }, onNext = { currentStep = 8 })
@@ -235,15 +252,17 @@ fun OnboardingWizardScreen(
                                         errorMessage = null
                                         coroutineScope.launch {
                                             try {
-                                                // 1. Register User
-                                                HomigoRepository.register(
-                                                    mapOf(
-                                                        "name" to fullName,
-                                                        "email" to email,
-                                                        "password" to password,
-                                                        "gender" to gender
+                                                // 1. Register User if not already logged in
+                                                if (!isAlreadyLoggedIn) {
+                                                    HomigoRepository.register(
+                                                        mapOf(
+                                                            "name" to fullName,
+                                                            "email" to email,
+                                                            "password" to password,
+                                                            "gender" to gender
+                                                        )
                                                     )
-                                                )
+                                                }
                                                 
                                                 // 2. Submit Profile Details
                                                 val profilePayload = mapOf(
