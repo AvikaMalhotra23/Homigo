@@ -75,6 +75,17 @@ private val lpuSchools = listOf(
     "School of Allied and Healthcare Sciences"
 )
 
+private val indiaStates = listOf(
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+    "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+    "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+    "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+    "Uttar Pradesh", "Uttarakhand", "West Bengal",
+    "Delhi", "Jammu and Kashmir", "Ladakh", "Puducherry"
+)
+
+
 @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingWizardScreen(
@@ -100,13 +111,12 @@ fun OnboardingWizardScreen(
     var confirmPassword by remember { mutableStateOf("") }
 
     // Academic Details
-    var selectedCourse by remember { mutableStateOf("B.Tech") }
-    var selectedBranch by remember { mutableStateOf("Computer Science") }
+    var selectedCourse by remember { mutableStateOf("Choose Course") }
+    var selectedBranch by remember { mutableStateOf("Choose Branch") }
     var selectedYear by remember { mutableStateOf("1st") }
     var selectedSemester by remember { mutableStateOf(1) }
-    var sectionName by remember { mutableStateOf("") }
     var rollNumber by remember { mutableStateOf("") }
-    var selectedSchool by remember { mutableStateOf(lpuSchools.first()) }
+    var selectedSchool by remember { mutableStateOf("Choose School") }
 
     // Accommodation Setup
     var lookingFor by remember { mutableStateOf("Roommate") }
@@ -129,7 +139,7 @@ fun OnboardingWizardScreen(
     var selectedInterests by remember { mutableStateOf(setOf<String>()) }
     var monthlyBudget by remember { mutableStateOf("₹4000 — ₹6000") }
     var selectedLanguages by remember { mutableStateOf(setOf<String>()) }
-    var hometownState by remember { mutableStateOf("") }
+    var hometownState by remember { mutableStateOf("Choose State") }
     var foreignNational by remember { mutableStateOf(false) }
     var userBio by remember { mutableStateOf("") }
 
@@ -239,11 +249,11 @@ fun OnboardingWizardScreen(
                                     }
                                 })
                                 5 -> StepBasicDetails(fullName = fullName, onNameChanged = { fullName = it }, email = email, onEmailChanged = { email = it }, phone = phone, onPhoneChanged = { phone = it }, password = password, onPasswordChanged = { password = it }, confirmPassword = confirmPassword, onConfirmChanged = { confirmPassword = it }, onNext = { currentStep = 6 })
-                                6 -> StepAcademicDetails(selectedCollege = selectedCollege, course = selectedCourse, onCourseChanged = { selectedCourse = it }, branch = selectedBranch, onBranchChanged = { selectedBranch = it }, year = selectedYear, onYearChanged = { selectedYear = it }, semester = selectedSemester, onSemesterChanged = { selectedSemester = it }, section = sectionName, onSectionChanged = { sectionName = it }, rollNumber = rollNumber, onRollChanged = { rollNumber = it }, selectedSchool = selectedSchool, onSchoolChanged = { selectedSchool = it }, onNext = { currentStep = 7 })
+                                6 -> StepAcademicDetails(selectedCollege = selectedCollege, course = selectedCourse, onCourseChanged = { selectedCourse = it }, branch = selectedBranch, onBranchChanged = { selectedBranch = it }, year = selectedYear, onYearChanged = { selectedYear = it }, semester = selectedSemester, onSemesterChanged = { selectedSemester = it }, rollNumber = rollNumber, onRollChanged = { rollNumber = it }, selectedSchool = selectedSchool, onSchoolChanged = { selectedSchool = it }, onNext = { currentStep = 7 })
                                 7 -> StepAccommodationSetup(gender = gender, selectedCollege = selectedCollege, lookingFor = lookingFor, onLookingForChanged = { lookingFor = it }, preferredHostel = preferredHostel, onPreferredChanged = { preferredHostel = it }, currentHostel = currentHostel, onCurrentChanged = { currentHostel = it }, roomNumber = currentRoomNumber, onRoomChanged = { currentRoomNumber = it }, moveInDate = moveInDate, onMoveInChanged = { moveInDate = it }, onNext = { currentStep = 8 })
                                 8 -> StepLifestylePreferences(foodPref = foodPref, onFoodChanged = { foodPref = it }, sleepSchedule = sleepSchedule, onSleepChanged = { sleepSchedule = it }, studyHabits = studyHabits, onStudyChanged = { studyHabits = it }, cleanliness = cleanlinessRating, onCleanlinessChanged = { cleanlinessRating = it }, smoking = smokingPref, onSmokingChanged = { smokingPref = it }, drinking = drinkingPref, onDrinkingChanged = { drinkingPref = it }, guests = guestsPref, onGuestsChanged = { guestsPref = it }, pets = petsPref, onPetsChanged = { petsPref = it }, cardSelectedColor = cardSelectedColor, onNext = { currentStep = 9 })
                                 9 -> StepInterestsSelection(selectedInterests = selectedInterests, onInterestsChanged = { selectedInterests = it }, cardSelectedColor = cardSelectedColor, onNext = { currentStep = 10 })
-                                10 -> StepBudgetAndBio(budget = monthlyBudget, onBudgetChanged = { monthlyBudget = it }, selectedLanguages = selectedLanguages, onLanguagesChanged = { selectedLanguages = it }, hometown = hometownState, onHometownChanged = { hometownState = it }, isForeign = foreignNational, onForeignChanged = { foreignNational = it }, bio = userBio, onBioChanged = { userBio = it }, onNext = { currentStep = 11 })
+                                10 -> StepBudgetAndBio(selectedLanguages = selectedLanguages, onLanguagesChanged = { selectedLanguages = it }, hometown = hometownState, onHometownChanged = { hometownState = it }, isForeign = foreignNational, onForeignChanged = { foreignNational = it }, bio = userBio, onBioChanged = { userBio = it }, onNext = { currentStep = 11 })
                                 11 -> StepAICompatibilityCalculation(
                                     isLoading = isLoading,
                                     errorMessage = errorMessage,
@@ -273,7 +283,6 @@ fun OnboardingWizardScreen(
                                                     "branch" to selectedBranch,
                                                     "year" to selectedYear,
                                                     "semester" to selectedSemester,
-                                                    "section" to sectionName,
                                                     "roll_number" to rollNumber,
                                                     "school" to selectedSchool,
                                                     "looking_for" to lookingFor,
@@ -698,7 +707,6 @@ private fun StepAcademicDetails(
     branch: String, onBranchChanged: (String) -> Unit,
     year: String, onYearChanged: (String) -> Unit,
     semester: Int, onSemesterChanged: (Int) -> Unit,
-    section: String, onSectionChanged: (String) -> Unit,
     rollNumber: String, onRollChanged: (String) -> Unit,
     selectedSchool: String, onSchoolChanged: (String) -> Unit,
     onNext: () -> Unit
@@ -718,11 +726,34 @@ private fun StepAcademicDetails(
         Text("Academic Details", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Course Dropdown
+        // 1. School Dropdown (on top if LPU)
+        if (selectedCollege == "Lovely Professional University") {
+            Text("School", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = { schoolExpanded = !schoolExpanded }, modifier = Modifier.fillMaxWidth()) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(if (selectedSchool == "Choose School") "Choose School" else selectedSchool, modifier = Modifier.weight(1f), maxLines = 1)
+                        Text("▼")
+                    }
+                }
+                DropdownMenu(
+                    expanded = schoolExpanded,
+                    onDismissRequest = { schoolExpanded = false },
+                    modifier = Modifier.fillMaxWidth().height(260.dp)
+                ) {
+                    lpuSchools.forEach { s ->
+                        DropdownMenuItem(text = { Text(s, maxLines = 1) }, onClick = { onSchoolChanged(s); schoolExpanded = false })
+                    }
+                }
+            }
+        }
+
+        // 2. Course Dropdown
+        Text("Course Domain", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedButton(onClick = { courseExpanded = !courseExpanded }, modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Course: ${course}")
+                    Text(if (course == "Choose Course") "Choose Course" else course)
                     Text("▼")
                 }
             }
@@ -733,11 +764,12 @@ private fun StepAcademicDetails(
             }
         }
 
-        // Branch Dropdown
+        // 3. Branch Dropdown
+        Text("Specialization/Branch", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedButton(onClick = { branchExpanded = !branchExpanded }, modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Branch: ${branch}")
+                    Text(if (branch == "Choose Branch") "Choose Branch" else branch)
                     Text("▼")
                 }
             }
@@ -748,7 +780,8 @@ private fun StepAcademicDetails(
             }
         }
 
-        // Year and Semester selector side-by-side
+        // 4. Year and Semester selector side-by-side
+        Text("Academic Year & Semester", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Box(modifier = Modifier.weight(1f)) {
                 OutlinedButton(onClick = { yearExpanded = !yearExpanded }, modifier = Modifier.fillMaxWidth()) {
@@ -779,48 +812,20 @@ private fun StepAcademicDetails(
             }
         }
 
-        OutlinedTextField(
-            value = section,
-            onValueChange = onSectionChanged,
-            label = { Text("Section (e.g. K24AB)") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
+        // 5. Roll Number
+        Text("Roll Number (Optional)", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
         OutlinedTextField(
             value = rollNumber,
             onValueChange = onRollChanged,
-            label = { Text("Roll Number (Optional)") },
+            label = { Text("Roll Number") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
 
-        // School dropdown mapping to visual screenshots if college is LPU
-        if (selectedCollege == "Lovely Professional University") {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                OutlinedButton(onClick = { schoolExpanded = !schoolExpanded }, modifier = Modifier.fillMaxWidth()) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("School: ${selectedSchool}", modifier = Modifier.weight(1f), maxLines = 1)
-                        Text("▼")
-                    }
-                }
-                DropdownMenu(
-                    expanded = schoolExpanded,
-                    onDismissRequest = { schoolExpanded = false },
-                    modifier = Modifier.fillMaxWidth().height(260.dp)
-                ) {
-                    lpuSchools.forEach { s ->
-                        DropdownMenuItem(text = { Text(s, maxLines = 1) }, onClick = { onSchoolChanged(s); schoolExpanded = false })
-                    }
-                }
-            }
-        }
-
-        val isAcademicValid = course.isNotBlank() &&
-                branch.isNotBlank() &&
+        val isAcademicValid = course.isNotBlank() && course != "Choose Course" &&
+                branch.isNotBlank() && branch != "Choose Branch" &&
                 year.isNotBlank() &&
-                section.isNotBlank() &&
-                (if (selectedCollege == "Lovely Professional University") selectedSchool.isNotBlank() else true)
+                (if (selectedCollege == "Lovely Professional University") selectedSchool.isNotBlank() && selectedSchool != "Choose School" else true)
 
         Spacer(modifier = Modifier.height(16.dp))
         AnimatedVisibility(
@@ -1155,7 +1160,6 @@ private fun StepInterestsSelection(selectedInterests: Set<String>, onInterestsCh
 
 @Composable
 private fun StepBudgetAndBio(
-    budget: String, onBudgetChanged: (String) -> Unit,
     selectedLanguages: Set<String>, onLanguagesChanged: (Set<String>) -> Unit,
     hometown: String, onHometownChanged: (String) -> Unit,
     isForeign: Boolean, onForeignChanged: (Boolean) -> Unit,
@@ -1163,21 +1167,28 @@ private fun StepBudgetAndBio(
     onNext: () -> Unit
 ) {
     val languagesList = listOf("English", "Hindi", "Punjabi", "Tamil", "Telugu", "Bengali", "Malayalam", "Gujarati")
+    var stateExpanded by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text("Budget & Background", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Text("Background & Bio", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(4.dp))
 
-        Text("Monthly Budget", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("₹2000 — ₹4000", "₹4000 — ₹6000", "₹6000+").forEach { opt ->
-                val isSel = budget == opt
-                FilterChip(
-                    selected = isSel,
-                    onClick = { onBudgetChanged(opt) },
-                    label = { Text(opt, fontSize = 11.sp) },
-                    modifier = Modifier.weight(1f)
-                )
+        Text("Hometown (Select State)", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(onClick = { stateExpanded = !stateExpanded }, modifier = Modifier.fillMaxWidth()) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(if (hometown == "Choose State" || hometown.isBlank()) "Choose State (India)" else hometown, modifier = Modifier.weight(1f), maxLines = 1)
+                    Text("▼")
+                }
+            }
+            DropdownMenu(
+                expanded = stateExpanded,
+                onDismissRequest = { stateExpanded = false },
+                modifier = Modifier.fillMaxWidth().height(260.dp)
+            ) {
+                indiaStates.forEach { st ->
+                    DropdownMenuItem(text = { Text(st) }, onClick = { onHometownChanged(st); stateExpanded = false })
+                }
             }
         }
 
@@ -1195,14 +1206,6 @@ private fun StepBudgetAndBio(
             }
         }
 
-        OutlinedTextField(
-            value = hometown,
-            onValueChange = onHometownChanged,
-            label = { Text("Hometown (State/Country)") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Checkbox(checked = isForeign, onCheckedChange = onForeignChanged)
             Spacer(modifier = Modifier.width(8.dp))
@@ -1217,9 +1220,8 @@ private fun StepBudgetAndBio(
             maxLines = 4
         )
 
-        val isBudgetBioValid = budget.isNotBlank() &&
+        val isBudgetBioValid = hometown.isNotBlank() && hometown != "Choose State" &&
                 selectedLanguages.isNotEmpty() &&
-                hometown.isNotBlank() &&
                 bio.isNotBlank() && bio.length >= 10
 
         Spacer(modifier = Modifier.height(16.dp))

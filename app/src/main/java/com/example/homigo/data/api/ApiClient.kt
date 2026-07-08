@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
     // Public SSH tunnel URL allowing anyone on the internet to connect to the backend
-    private const val BASE_URL = "https://bfb67737daf560.lhr.life/api/"
+    private const val BASE_URL = "https://7250f2ab23c922.lhr.life/api/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
