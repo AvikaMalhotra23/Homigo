@@ -218,7 +218,10 @@ fun MainTabScreen(
                 label = "tabTransition"
             ) { tab ->
                 when (tab) {
-                    0 -> HomeScreen(onNavigateToChat = onNavigateToChat)
+                    0 -> HomeScreen(
+                        onNavigateToChat = onNavigateToChat,
+                        onCompleteProfileClick = { selectedTab = 4 }
+                    )
                     1 -> ExploreScreen()
                     2 -> RequestsScreen()
                     3 -> ChatListScreen(onNavigateToChat = onNavigateToChat)

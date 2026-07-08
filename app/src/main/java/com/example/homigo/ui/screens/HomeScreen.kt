@@ -28,7 +28,10 @@ import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onNavigateToChat: (Int, String) -> Unit) {
+fun HomeScreen(
+    onNavigateToChat: (Int, String) -> Unit,
+    onCompleteProfileClick: () -> Unit
+) {
     val tokenFlow = HomigoRepository.token.collectAsState()
     val authToken = tokenFlow.value  // Already "Bearer <jwt>" from repository
     val scope = rememberCoroutineScope()
@@ -166,7 +169,7 @@ fun HomeScreen(onNavigateToChat: (Int, String) -> Unit) {
                                 if (completion < 100) {
                                     Spacer(Modifier.height(8.dp))
                                     Button(
-                                        onClick = {},
+                                        onClick = onCompleteProfileClick,
                                         modifier = Modifier.height(32.dp),
                                         contentPadding = PaddingValues(horizontal = 16.dp),
                                         shape = RoundedCornerShape(8.dp)
