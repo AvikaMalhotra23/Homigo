@@ -143,11 +143,12 @@ fun OnboardingWizardScreen(
         currentHostel = selectedHostel
     }
 
-    // Dynamic extreme light background shade based on gender selection
-    val pastelBackgroundColor = if (gender == "female") Color(0xFFFFF5F7) else Color(0xFFF2F8FF)
+    // Keep theme as neutral general blue (male) during steps 1 to 10. Only on step 11 we apply the selected gender's theme!
+    val currentThemeGender = if (currentStep < 11) "male" else gender
+    val pastelBackgroundColor = if (currentThemeGender == "female") Color(0xFFFFF5F7) else Color(0xFFF2F8FF)
     val cardSelectedColor = Color(0xFFC8E6C9)
 
-    HomigoTheme(gender = gender) {
+    HomigoTheme(gender = currentThemeGender) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = pastelBackgroundColor
@@ -378,12 +379,18 @@ private fun StepGenderSelection(gender: String, onGenderChanged: (String) -> Uni
         }
 
         Spacer(modifier = Modifier.height(48.dp))
-        Button(
-            onClick = onNext,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().height(52.dp)
+        AnimatedVisibility(
+            visible = gender.isNotBlank(),
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
         ) {
-            Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = onNext,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -434,12 +441,18 @@ private fun StepCollegeSelection(selectedCollege: String, onCollegeSelected: (St
         }
 
         Spacer(modifier = Modifier.height(32.dp))
-        Button(
-            onClick = onNext,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().height(52.dp)
+        AnimatedVisibility(
+            visible = selectedCollege.isNotBlank(),
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
         ) {
-            Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = onNext,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -485,12 +498,18 @@ private fun StepHostelSelection(selectedCollege: String, gender: String, selecte
         }
 
         Spacer(modifier = Modifier.height(32.dp))
-        Button(
-            onClick = onNext,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().height(52.dp)
+        AnimatedVisibility(
+            visible = selectedHostel.isNotBlank(),
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
         ) {
-            Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = onNext,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -560,21 +579,25 @@ private fun StepBasicDetails(
             Text(validationError!!, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
         }
 
+        val isFormValid = fullName.isNotBlank() &&
+                email.isNotBlank() && email.contains("@") && email.contains(".") &&
+                phone.isNotBlank() && phone.length >= 10 &&
+                password.isNotBlank() && password.length >= 6 &&
+                confirmPassword == password
+
         Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = {
-                if (fullName.isBlank() || email.isBlank() || phone.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
-                    validationError = "Please fill in all fields"
-                } else if (password != confirmPassword) {
-                    validationError = "Passwords do not match"
-                } else {
-                    onNext()
-                }
-            },
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().height(52.dp)
+        AnimatedVisibility(
+            visible = isFormValid,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
         ) {
-            Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = onNext,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -704,13 +727,25 @@ private fun StepAcademicDetails(
             }
         }
 
+        val isAcademicValid = course.isNotBlank() &&
+                branch.isNotBlank() &&
+                year.isNotBlank() &&
+                section.isNotBlank() &&
+                (if (selectedCollege == "Lovely Professional University") selectedSchool.isNotBlank() else true)
+
         Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = onNext,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().height(52.dp)
+        AnimatedVisibility(
+            visible = isAcademicValid,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
         ) {
-            Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = onNext,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -801,13 +836,24 @@ private fun StepAccommodationSetup(
             modifier = Modifier.fillMaxWidth()
         )
 
+        val isAccommodationValid = lookingFor.isNotBlank() &&
+                preferredHostel.isNotBlank() &&
+                currentHostel.isNotBlank() &&
+                moveInDate.isNotBlank()
+
         Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = onNext,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().height(52.dp)
+        AnimatedVisibility(
+            visible = isAccommodationValid,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
         ) {
-            Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = onNext,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -1006,12 +1052,18 @@ private fun StepInterestsSelection(selectedInterests: Set<String>, onInterestsCh
         }
 
         Spacer(modifier = Modifier.height(32.dp))
-        Button(
-            onClick = onNext,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().height(52.dp)
+        AnimatedVisibility(
+            visible = selectedInterests.isNotEmpty(),
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
         ) {
-            Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = onNext,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -1080,13 +1132,24 @@ private fun StepBudgetAndBio(
             maxLines = 4
         )
 
+        val isBudgetBioValid = budget.isNotBlank() &&
+                selectedLanguages.isNotEmpty() &&
+                hometown.isNotBlank() &&
+                bio.isNotBlank() && bio.length >= 10
+
         Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = onNext,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().height(52.dp)
+        AnimatedVisibility(
+            visible = isBudgetBioValid,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
         ) {
-            Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = onNext,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
