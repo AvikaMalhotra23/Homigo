@@ -35,6 +35,10 @@ app.use('/api/chat', require('./routes/chat'));
 app.use('/api/expenses', require('./routes/expense'));
 app.use('/api/reviews', require('./routes/review'));
 app.use('/api/ai', require('./routes/ai'));
+app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/notices', require('./routes/notice'));
+app.use('/api/events', require('./routes/event'));
+app.use('/api/marketplace', require('./routes/marketplace'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

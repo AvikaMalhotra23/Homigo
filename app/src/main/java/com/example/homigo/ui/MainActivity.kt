@@ -6,10 +6,13 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavType
@@ -23,11 +26,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // Retrieve session details dynamically
             val currentUserState = HomigoRepository.currentUser.collectAsState()
             val gender = currentUserState.value?.gender ?: "male"
 
-            // Apply dynamic Theme wrapper based on user gender
             HomigoTheme(gender = gender) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -38,10 +39,30 @@ class MainActivity : ComponentActivity() {
                     NavHost(
                         navController = navController,
                         startDestination = "splash",
-                        enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(400)) },
-                        exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(400)) },
-                        popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(400)) },
-                        popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(400)) }
+                        enterTransition = {
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(400)
+                            )
+                        },
+                        exitTransition = {
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(400)
+                            )
+                        },
+                        popEnterTransition = {
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(400)
+                            )
+                        },
+                        popExitTransition = {
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(400)
+                            )
+                        }
                     ) {
                         composable("splash") {
                             SplashScreen(
@@ -113,9 +134,7 @@ class MainActivity : ComponentActivity() {
                             ChatScreen(
                                 otherUserId = userId,
                                 otherUserName = userName,
-                                onNavigateBack = {
-                                    navController.popBackStack()
-                                }
+                                onNavigateBack = { navController.popBackStack() }
                             )
                         }
                     }
@@ -125,6 +144,24 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// ─── TAB DEFINITION ──────────────────────────────────────────────────────────
+
+private data class BottomTab(
+    val label: String,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector
+)
+
+private val tabs = listOf(
+    BottomTab("Home",     Icons.Filled.Home,       Icons.Outlined.Home),
+    BottomTab("Discover", Icons.Filled.Search,      Icons.Outlined.Search),
+    BottomTab("Matches",  Icons.Filled.Favorite,    Icons.Outlined.FavoriteBorder),
+    BottomTab("Chat",     Icons.Filled.Email,       Icons.Outlined.Email),
+    BottomTab("Profile",  Icons.Filled.AccountCircle, Icons.Outlined.AccountCircle)
+)
+
+// ─── MAIN TAB SCREEN ─────────────────────────────────────────────────────────
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainTabScreen(
@@ -132,42 +169,33 @@ fun MainTabScreen(
     onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
-    val tabLabels = listOf("Explore", "Invites", "Chats", "Splitter", "Assistant", "Ratings", "Profile")
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Text("Homigo", fontWeight = FontWeight.Bold) 
-                },
-                actions = {
-                    TextButton(onClick = onLogout) {
-                        Text("Log Out", color = MaterialTheme.colorScheme.onPrimary)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            )
-        },
         bottomBar = {
             NavigationBar(
-                modifier = Modifier.height(72.dp)
+                modifier = Modifier.height(76.dp),
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
             ) {
-                tabLabels.forEachIndexed { index, label ->
+                tabs.forEachIndexed { index, tab ->
                     NavigationBarItem(
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
-                        label = { Text(label, fontSize = 9.sp) },
+                        label = { Text(tab.label, fontSize = 11.sp) },
                         icon = {
-                            // Simple text icon placeholder or circle badge
-                            Box(
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .padding(1.dp)
+                            Icon(
+                                imageVector = if (selectedTab == index) tab.selectedIcon else tab.unselectedIcon,
+                                contentDescription = tab.label,
+                                modifier = Modifier.size(24.dp)
                             )
-                        }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                 }
             }
@@ -178,16 +206,24 @@ fun MainTabScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            when (selectedTab) {
-                0 -> ExploreScreen()
-                1 -> RequestsScreen()
-                2 -> ChatListScreen(onNavigateToChat = onNavigateToChat)
-                3 -> ExpenseScreen()
-                4 -> ChatbotScreen()
-                5 -> ReviewsScreen()
-                6 -> ProfileSetupScreen(onSetupComplete = {
-                    // Profile setup complete action inside main tabs
-                })
+            AnimatedContent(
+                targetState = selectedTab,
+                transitionSpec = {
+                    if (targetState > initialState) {
+                        slideInHorizontally { it } + fadeIn() togetherWith slideOutHorizontally { -it } + fadeOut()
+                    } else {
+                        slideInHorizontally { -it } + fadeIn() togetherWith slideOutHorizontally { it } + fadeOut()
+                    }
+                },
+                label = "tabTransition"
+            ) { tab ->
+                when (tab) {
+                    0 -> HomeScreen(onNavigateToChat = onNavigateToChat)
+                    1 -> ExploreScreen()
+                    2 -> RequestsScreen()
+                    3 -> ChatListScreen(onNavigateToChat = onNavigateToChat)
+                    4 -> ProfileSetupScreen(onSetupComplete = {})
+                }
             }
         }
     }

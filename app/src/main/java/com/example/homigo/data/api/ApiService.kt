@@ -109,4 +109,26 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("userId") userId: Int
     ): RiskFactorReport
+
+    // ========== DASHBOARD ==========
+    @GET("dashboard")
+    suspend fun getDashboard(@Header("Authorization") token: String): DashboardSummary
+
+    // ========== NOTICES ==========
+    @GET("notices")
+    suspend fun getNotices(@Header("Authorization") token: String): List<Notice>
+
+    // ========== EVENTS ==========
+    @GET("events")
+    suspend fun getEvents(@Header("Authorization") token: String): List<Event>
+
+    // ========== MARKETPLACE ==========
+    @GET("marketplace")
+    suspend fun getMarketplace(@Header("Authorization") token: String): List<MarketplaceItem>
+
+    @POST("marketplace/add")
+    suspend fun addMarketplaceItem(
+        @Header("Authorization") token: String,
+        @Body body: Map<String, Any>
+    ): OkResponse
 }

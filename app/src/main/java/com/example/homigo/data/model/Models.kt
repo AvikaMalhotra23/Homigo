@@ -201,3 +201,54 @@ data class College(
     val city: String,
     val hostels: HostelsConfig
 )
+
+// ==================== DASHBOARD MODELS ====================
+
+data class Notice(
+    val id: Int,
+    val title: String,
+    val content: String,
+    val hostel: String,
+    val type: String,
+    val created_at: String
+)
+
+data class Event(
+    val id: Int,
+    val name: String,
+    val description: String?,
+    val date: String,
+    val time: String,
+    val location: String,
+    val type: String,
+    val organizer: String?
+)
+
+data class MarketplaceItem(
+    val id: Int,
+    val seller_id: Int,
+    val seller_name: String?,
+    val title: String,
+    val price: Double,
+    val category: String,
+    val hostel: String,
+    val description: String?,
+    val is_sold: Int,
+    val created_at: String
+)
+
+data class DashboardSummary(
+    val profileCompletion: Int,
+    val userName: String,
+    val college: String,
+    val hostel: String,
+    val gender: String,
+    val topMatches: List<Profile>,
+    val newRequestsCount: Int,
+    val notices: List<Notice>,
+    val events: List<Event>,
+    val marketplace: List<MarketplaceItem>,
+    val expenseBreakdown: List<CategoryTotal>,
+    val expenseTotal: Int,
+    val aiSuggestion: String?
+)
