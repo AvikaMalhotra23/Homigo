@@ -32,9 +32,18 @@ exports.updateProfile = async (req, res) => {
     budget_min, budget_max, sleep_schedule, smoking, drinking, food_preference, cleanliness, pets, guests, bio
   } = req.body;
 
-  if (!college || !hostel || !room_preference || !course || !sleep_schedule || !smoking || !drinking || !food_preference || !cleanliness || !pets || !guests) {
-    return res.status(400).json({ error: 'All preference fields are required' });
-  }
+  // Use defaults for any missing fields so partial profiles save without 400 errors
+  const safeCollege       = college       || '';
+  const safeHostel        = hostel        || '';
+  const safeRoomPref      = room_preference || 'shared';
+  const safeCourse        = course        || '';
+  const safeSleep         = sleep_schedule || 'flexible';
+  const safeSmoking       = smoking       || 'no';
+  const safeDrinking      = drinking      || 'no';
+  const safeFood          = food_preference || 'any';
+  const safeCleanliness   = cleanliness   || 'moderate';
+  const safePets          = pets          || 'no';
+  const safeGuests        = guests        || 'rare';
 
   // Calculate simple fake-profile risk score locally
   let riskScore = 0.0;
@@ -58,11 +67,11 @@ exports.updateProfile = async (req, res) => {
           pets = ?, guests = ?, bio = ?, fake_risk_score = ?
          WHERE user_id = ?`,
         [
-          college, hostel, room_preference, course, branch || '', year || '', semester || 1, section || '',
-          roll_number || '', school || '', looking_for || 'Roommate', preferred_hostel || hostel, current_hostel || hostel, room_number || '',
+          safeCollege, safeHostel, safeRoomPref, safeCourse, branch || '', year || '', semester || 1, section || '',
+          roll_number || '', school || '', looking_for || 'Roommate', preferred_hostel || safeHostel, current_hostel || safeHostel, room_number || '',
           move_in_date || '', interestsStr, languagesStr, hometown || '',
-          budget_min || 0, budget_max || 100000, sleep_schedule, smoking, drinking, food_preference, cleanliness,
-          pets, guests, bio || '', riskScore, userId
+          budget_min || 0, budget_max || 100000, safeSleep, safeSmoking, safeDrinking, safeFood, safeCleanliness,
+          safePets, safeGuests, bio || '', riskScore, userId
         ]
       );
     } else {
@@ -74,11 +83,11 @@ exports.updateProfile = async (req, res) => {
           budget_min, budget_max, sleep_schedule, smoking, drinking, food_preference, cleanliness, pets, guests, bio, is_verified, fake_risk_score
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
         [
-          userId, college, hostel, room_preference, course, branch || '', year || '', semester || 1, section || '',
-          roll_number || '', school || '', looking_for || 'Roommate', preferred_hostel || hostel, current_hostel || hostel, room_number || '',
+          userId, safeCollege, safeHostel, safeRoomPref, safeCourse, branch || '', year || '', semester || 1, section || '',
+          roll_number || '', school || '', looking_for || 'Roommate', preferred_hostel || safeHostel, current_hostel || safeHostel, room_number || '',
           move_in_date || '', interestsStr, languagesStr, hometown || '',
-          budget_min || 0, budget_max || 100000, sleep_schedule, smoking, drinking, food_preference, cleanliness,
-          pets, guests, bio || '', riskScore
+          budget_min || 0, budget_max || 100000, safeSleep, safeSmoking, safeDrinking, safeFood, safeCleanliness,
+          safePets, safeGuests, bio || '', riskScore
         ]
       );
     }
