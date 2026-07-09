@@ -25,6 +25,8 @@ import com.example.homigo.data.model.*
 import com.example.homigo.data.repository.HomigoRepository
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import androidx.compose.ui.window.Dialog
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +40,12 @@ fun HomeScreen(
     var dashboard by remember { mutableStateOf<DashboardSummary?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
+    
+    // Profile Picture popup state
+    var showProfilePicDialog by remember { mutableStateOf(false) }
+    var hasShownDialog by rememberSaveable { mutableStateOf(false) }
+    var uploadInProgress by remember { mutableStateOf(false) }
+    var selectedAvatar by remember { mutableStateOf("👤") }
 
     // Fetch dashboard data
     LaunchedEffect(authToken) {
@@ -51,6 +59,13 @@ fun HomeScreen(
             }
         } else {
             isLoading = false
+        }
+    }
+
+    LaunchedEffect(dashboard) {
+        if (dashboard != null && !hasShownDialog) {
+            showProfilePicDialog = true
+            hasShownDialog = true
         }
     }
 
@@ -360,6 +375,150 @@ fun HomeScreen(
                 }
 
                 item { Spacer(Modifier.height(16.dp)) }
+            }
+        }
+
+        // Profile Picture Dialog popup
+        if (showProfilePicDialog) {
+            Dialog(onDismissRequest = { showProfilePicDialog = false }) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                    border = BorderStroke(2.dp, primaryColor.copy(0.4f))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Customize Your Profile! ✨",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E293B)
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = "Add a profile picture or choose an avatar to help roommates recognize you.",
+                            fontSize = 13.sp,
+                            color = Color(0xFF64748B),
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(Modifier.height(20.dp))
+                        
+                        // Main Avatar Circle
+                        Box(
+                            modifier = Modifier
+                                .size(100.dp)
+                                .background(primaryColor.copy(0.12f), CircleShape)
+                                .border(BorderStroke(3.dp, primaryColor), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (uploadInProgress) {
+                                CircularProgressIndicator(color = primaryColor, modifier = Modifier.size(36.dp))
+                            } else {
+                                Text(selectedAvatar, fontSize = 52.sp)
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
+
+                        // Detail summary
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = primaryColor.copy(0.08f),
+                            border = BorderStroke(1.dp, primaryColor.copy(0.2f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = dashboard?.userName ?: "Student",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF1E293B)
+                                )
+                                Text(
+                                    text = "✔ Verified Student",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF10B981)
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = "${dashboard?.college?.take(30) ?: "College"} • ${dashboard?.hostel?.uppercase() ?: "Hostel"}",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF64748B)
+                                )
+                            }
+                        }
+                        
+                        Spacer(Modifier.height(20.dp))
+                        
+                        // Avatar selection row
+                        Text("Select a quick avatar:", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF64748B))
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf("👩‍🎓", "👨‍🎓", "🧑‍💻", "🎨", "🌟", "🦁").forEach { avatar ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(
+                                            if (selectedAvatar == avatar) primaryColor.copy(0.25f) else Color(0xFFF1F5F9),
+                                            CircleShape
+                                        )
+                                        .border(
+                                            BorderStroke(
+                                                2.dp,
+                                                if (selectedAvatar == avatar) primaryColor else Color.Transparent
+                                            ),
+                                            CircleShape
+                                        )
+                                        .clickable { selectedAvatar = avatar },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(avatar, fontSize = 20.sp)
+                                }
+                            }
+                        }
+                        
+                        Spacer(Modifier.height(24.dp))
+                        
+                        // Action Buttons
+                        Button(
+                            onClick = {
+                                uploadInProgress = true
+                                scope.launch {
+                                    kotlinx.coroutines.delay(1800) // Simulating upload delay
+                                    uploadInProgress = false
+                                    showProfilePicDialog = false
+                                }
+                            },
+                            enabled = !uploadInProgress,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth().height(48.dp)
+                        ) {
+                            Text("Save & Complete", fontWeight = FontWeight.Bold)
+                        }
+                        
+                        Spacer(Modifier.height(8.dp))
+                        
+                        TextButton(
+                            onClick = { showProfilePicDialog = false },
+                            enabled = !uploadInProgress,
+                            modifier = Modifier.fillMaxWidth().height(44.dp)
+                        ) {
+                            Text("Skip for Now", color = Color(0xFF64748B))
+                        }
+                    }
+                }
             }
         }
     }
