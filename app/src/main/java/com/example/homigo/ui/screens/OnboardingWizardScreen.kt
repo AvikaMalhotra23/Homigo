@@ -207,24 +207,24 @@ fun OnboardingWizardScreen(
 
     // Accommodation Setup
     var lookingFor by remember { mutableStateOf("Roommate") }
-    var preferredHostel by remember { mutableStateOf("BH-1") }
-    var currentHostel by remember { mutableStateOf("BH-1") }
+    var preferredHostel by remember { mutableStateOf("") }
+    var currentHostel by remember { mutableStateOf("") }
     var currentRoomNumber by remember { mutableStateOf("") }
     var moveInDate by remember { mutableStateOf("") }
 
     // Lifestyle Preferences
-    var foodPref by remember { mutableStateOf("🥗 Vegetarian") }
-    var sleepSchedule by remember { mutableStateOf("⏰ Flexible") }
-    var studyHabits by remember { mutableStateOf("📚 Silent Study") }
-    var cleanliness by remember { mutableStateOf("🧹 Moderately Clean") }
-    var smokingPref by remember { mutableStateOf("🚭 Never") }
-    var drinkingPref by remember { mutableStateOf("❌ Never") }
-    var guestsPref by remember { mutableStateOf("👥 Occasionally") }
-    var wakeUpTime by remember { mutableStateOf("⏰ 6–8 AM") }
-    var roomEnvironment by remember { mutableStateOf("🔊 Some Noise is Fine") }
-    var personalityType by remember { mutableStateOf("😌 Ambivert") }
-    var dailyRoutine by remember { mutableStateOf("⚖️ Balanced") }
-    var workStyle by remember { mutableStateOf("📖 Academics First") }
+    var foodPref by remember { mutableStateOf("") }
+    var sleepSchedule by remember { mutableStateOf("") }
+    var studyHabits by remember { mutableStateOf("") }
+    var cleanliness by remember { mutableStateOf("") }
+    var smokingPref by remember { mutableStateOf("") }
+    var drinkingPref by remember { mutableStateOf("") }
+    var guestsPref by remember { mutableStateOf("") }
+    var wakeUpTime by remember { mutableStateOf("") }
+    var roomEnvironment by remember { mutableStateOf("") }
+    var personalityType by remember { mutableStateOf("") }
+    var dailyRoutine by remember { mutableStateOf("") }
+    var workStyle by remember { mutableStateOf("") }
 
     // Interests, Bio, Deal Breakers & Room Purpose
     var selectedInterests by remember { mutableStateOf(setOf<String>()) }
@@ -247,8 +247,6 @@ fun OnboardingWizardScreen(
         } else {
             selectedHostel = if (gender == "female") "Kailash Hostel" else "Aravali Hostel"
         }
-        preferredHostel = selectedHostel
-        currentHostel = selectedHostel
     }
 
     // Keep theme as neutral general blue (male) during steps 1 to 10. Only on step 11 we apply the selected gender's theme!
@@ -2065,7 +2063,7 @@ private fun StepAccommodationSetup(
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedButton(onClick = { prefExpanded = !prefExpanded }, modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Preferred Hostel: ${preferredHostel}")
+                    Text("Preferred Hostel:${if (preferredHostel.isBlank()) "" else " $preferredHostel"}")
                     Text("▼")
                 }
             }
@@ -2080,7 +2078,7 @@ private fun StepAccommodationSetup(
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedButton(onClick = { currExpanded = !currExpanded }, modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Current Hostel: ${currentHostel}")
+                    Text("Current Hostel:${if (currentHostel.isBlank()) "" else " $currentHostel"}")
                     Text("▼")
                 }
             }
@@ -2109,7 +2107,7 @@ private fun StepAccommodationSetup(
                 onValueChange = {},
                 readOnly = true,
                 enabled = false,
-                label = { Text("Expected Move-in Date") },
+                label = { Text("📅 Expected Move-in Date") },
                 trailingIcon = {
                     Icon(Icons.Default.DateRange, contentDescription = "Select Date")
                 },
@@ -2183,10 +2181,29 @@ private fun StepLifestylePreferences(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     options.forEach { opt ->
+                        val isSelected = current == opt
                         FilterChip(
-                            selected = current == opt,
+                            selected = isSelected,
                             onClick = { onSelected(opt) },
-                            label = { Text(opt) }
+                            label = { 
+                                Text(
+                                    text = opt, 
+                                    color = if (isSelected) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                ) 
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color.White,
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                selectedBorderColor = Color(0xFF2E7D32),
+                                selectedBorderWidth = 2.dp,
+                                borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                borderWidth = 1.dp
+                            )
                         )
                     }
                 }
@@ -2206,13 +2223,32 @@ private fun StepLifestylePreferences(
         PreferenceSection("📅 Daily Routine", dailyRoutine, listOf("📅 Highly Organized", "⚖️ Balanced", "🌊 Go With the Flow"), onDailyRoutineChanged)
         PreferenceSection("💼 Work Style", workStyle, listOf("💻 Remote Internships", "📖 Academics First", "🚀 Startup Focus", "💼 Preparing for Placements", "📚 Higher Studies"), onWorkStyleChanged)
 
+        val isLifestyleValid = foodPref.isNotBlank() &&
+                sleepSchedule.isNotBlank() &&
+                studyHabits.isNotBlank() &&
+                cleanliness.isNotBlank() &&
+                smoking.isNotBlank() &&
+                drinking.isNotBlank() &&
+                guests.isNotBlank() &&
+                wakeUpTime.isNotBlank() &&
+                roomEnvironment.isNotBlank() &&
+                personalityType.isNotBlank() &&
+                dailyRoutine.isNotBlank() &&
+                workStyle.isNotBlank()
+
         Spacer(modifier = Modifier.height(24.dp))
-        Button(
-            onClick = onNext,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().height(52.dp)
+        AnimatedVisibility(
+            visible = isLifestyleValid,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
         ) {
-            Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = onNext,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
