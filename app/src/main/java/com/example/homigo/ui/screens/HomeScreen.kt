@@ -5,16 +5,15 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.*
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.*
@@ -25,7 +24,6 @@ import com.example.homigo.data.model.*
 import com.example.homigo.data.repository.HomigoRepository
 import kotlinx.coroutines.launch
 import java.util.Calendar
-import androidx.compose.ui.window.Dialog
 import androidx.compose.runtime.saveable.rememberSaveable
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,17 +33,10 @@ fun HomeScreen(
     onCompleteProfileClick: () -> Unit
 ) {
     val tokenFlow = HomigoRepository.token.collectAsState()
-    val authToken = tokenFlow.value  // Already "Bearer <jwt>" from repository
-    val scope = rememberCoroutineScope()
+    val authToken = tokenFlow.value
     var dashboard by remember { mutableStateOf<DashboardSummary?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
-    
-    // Profile Picture popup state
-    var showProfilePicDialog by remember { mutableStateOf(false) }
-    var hasShownDialog by rememberSaveable { mutableStateOf(false) }
-    var uploadInProgress by remember { mutableStateOf(false) }
-    var selectedAvatar by remember { mutableStateOf("👤") }
 
     // Fetch dashboard data
     LaunchedEffect(authToken) {
@@ -62,461 +53,626 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(dashboard) {
-        if (dashboard != null && !hasShownDialog) {
-            showProfilePicDialog = true
-            hasShownDialog = true
-        }
-    }
-
     val greeting = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
         in 5..11 -> "Good Morning"
         in 12..16 -> "Good Afternoon"
         else -> "Good Evening"
     }
 
-    val primaryColor = MaterialTheme.colorScheme.primary
     val isFemale = (dashboard?.gender ?: "male") == "female"
+    
+    // Dynamic Premium Startup Color Palette based on Gender
+    val primaryColor = if (isFemale) Color(0xFFEC4899) else Color(0xFF0284C7) // Pink / Sky Blue
+    val secondaryColor = if (isFemale) Color(0xFFF472B6) else Color(0xFF38BDF8)
+    val backgroundStartColor = if (isFemale) Color(0xFFFFF1F2) else Color(0xFFF0F9FF) // Lightest gradient bg
+    val accentBgColor = if (isFemale) Color(0xFFFFF0F6) else Color(0xFFF0F7FF)
+    val accentTextColor = if (isFemale) Color(0xFFDB2777) else Color(0xFF0369A1)
+    val cardBgColor = Color.White
 
-    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(backgroundStartColor, Color.White, Color.White)
+                )
+            )
+    ) {
         if (isLoading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     CircularProgressIndicator(color = primaryColor, modifier = Modifier.size(48.dp))
-                    Text("Loading your dashboard...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Loading Homigo Dashboard...", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 24.dp)
+                contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                // ─── TOP GRADIENT HEADER ────────────────────────────────────────
+                // ─── SECTION 1: PREMIUM HEADER ─────────────────────────────────
                 item {
-                    Box(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(primaryColor, primaryColor.copy(alpha = 0.7f), Color.Transparent)
-                                )
-                            )
-                            .padding(horizontal = 20.dp, vertical = 24.dp)
+                            .padding(horizontal = 20.dp)
                     ) {
-                        Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = greeting,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF64748B)
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = dashboard?.userName ?: "Avika Malhotra",
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFF1E293B)
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.LocationOn,
+                                        contentDescription = "Location",
+                                        tint = accentTextColor,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                    Text(
+                                        text = "${dashboard?.college ?: "LPU"} • ${dashboard?.hostel ?: "Girls Hostel 5"}",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFF475569)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    val verified = (dashboard?.profileCompletion ?: 0) == 100
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = if (verified) Color(0xFF10B981).copy(0.12f) else Color(0xFFF59E0B).copy(0.12f)
+                                    ) {
+                                        Text(
+                                            text = if (verified) "Verified ✓" else "Pending Verification",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (verified) Color(0xFF059669) else Color(0xFFD97706),
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                            }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // Notification button with badge
+                                IconButton(
+                                    onClick = {},
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .background(Color.White, CircleShape)
+                                        .shadow(1.dp, CircleShape)
+                                ) {
+                                    val count = dashboard?.newRequestsCount ?: 0
+                                    if (count > 0) {
+                                        BadgedBox(
+                                            badge = { Badge(containerColor = primaryColor) { Text("$count") } }
+                                        ) {
+                                            Icon(Icons.Default.Notifications, "Notifications", tint = Color(0xFF475569))
+                                        }
+                                    } else {
+                                        Icon(Icons.Default.Notifications, "Notifications", tint = Color(0xFF475569))
+                                    }
+                                }
+                                
+                                // Profile/Avatar button
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .background(accentBgColor, CircleShape)
+                                        .border(BorderStroke(2.dp, primaryColor), CircleShape)
+                                        .shadow(1.dp, CircleShape)
+                                ) {
+                                    Text(
+                                        text = if (isFemale) "👩‍🎓" else "👨‍🎓",
+                                        fontSize = 22.sp
+                                    )
+                                }
+
+                                // Settings button
+                                IconButton(
+                                    onClick = {},
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .background(Color.White, CircleShape)
+                                        .shadow(1.dp, CircleShape)
+                                ) {
+                                    Icon(Icons.Default.Settings, "Settings", tint = Color(0xFF475569))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ─── SECTION 2: PROFILE COMPLETION & READINESS CARD ────────────
+                val completion = dashboard?.profileCompletion ?: 0
+                if (completion < 100) {
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = CardDefaults.cardColors(containerColor = cardBgColor),
+                            border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(20.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = "Profile Completion",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 16.sp,
+                                            color = Color(0xFF1E293B)
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = "Complete profile to receive better roommate suggestions.",
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF64748B)
+                                        )
+                                    }
+                                    Text(
+                                        text = "$completion%",
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 20.sp,
+                                        color = primaryColor
+                                    )
+                                }
+                                
+                                Spacer(modifier = Modifier.height(12.dp))
+                                
+                                // Progress bar
+                                LinearProgressIndicator(
+                                    progress = { completion / 100f },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(10.dp)
+                                        .clip(RoundedCornerShape(5.dp)),
+                                    color = primaryColor,
+                                    trackColor = primaryColor.copy(alpha = 0.12f)
+                                )
+                                
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // Checklist of missing features
+                                Text(
+                                    text = "Profile Checklist:",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF475569)
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    ChecklistItem(label = "Bio", checked = true)
+                                    ChecklistItem(label = "Lifestyle", checked = completion >= 80)
+                                    ChecklistItem(label = "Interests", checked = completion >= 90)
+                                }
+
+                                Spacer(modifier = Modifier.height(18.dp))
+
+                                Button(
+                                    onClick = onCompleteProfileClick,
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                                    modifier = Modifier.fillMaxWidth().height(46.dp)
+                                ) {
+                                    Text("Complete Profile", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ─── SECTION 3: ROOMMATE DISCOVERY CARD ────────────────────────
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = cardBgColor),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                text = "Find Compatible Roommates",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = Color(0xFF1E293B)
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Start discovering students from ${dashboard?.college ?: "LPU"} • ${dashboard?.hostel ?: "GH-5"}",
+                                fontSize = 13.sp,
+                                color = Color(0xFF64748B)
+                            )
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            val candidates = dashboard?.topMatches ?: emptyList()
+                            if (candidates.isEmpty()) {
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color(0xFFF8FAFC),
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                                ) {
+                                    Text(
+                                        text = "No students have registered yet. We'll notify you when students from your university join.",
+                                        fontSize = 12.sp,
+                                        color = Color(0xFF64748B),
+                                        modifier = Modifier.padding(14.dp),
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            } else {
+                                Text(
+                                    text = "${candidates.size} Compatible Students Found",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF10B981),
+                                    modifier = Modifier.padding(bottom = 12.dp)
+                                )
+                            }
+
+                            Button(
+                                onClick = {},
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                                modifier = Modifier.fillMaxWidth().height(46.dp)
+                            ) {
+                                Text("Discover Now", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            }
+                        }
+                    }
+                }
+
+                // ─── SECTION 4: MY REQUESTS SUMMARY ────────────────────────────
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = cardBgColor),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                text = "My Roommate Requests",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = Color(0xFF1E293B)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column {
-                                    Text(
-                                        "$greeting, ${dashboard?.userName?.split(" ")?.firstOrNull() ?: "Student"} 👋",
-                                        fontSize = 22.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                    Spacer(Modifier.height(4.dp))
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.LocationOn, null, tint = Color.White.copy(0.8f), modifier = Modifier.size(14.dp))
-                                        Spacer(Modifier.width(4.dp))
-                                        Text(
-                                            "${dashboard?.college?.take(20) ?: "—"} • ${dashboard?.hostel?.uppercase() ?: "—"}",
-                                            fontSize = 13.sp,
-                                            color = Color.White.copy(0.85f)
-                                        )
-                                    }
-                                }
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    if ((dashboard?.newRequestsCount ?: 0) > 0) {
-                                        BadgedBox(
-                                            badge = { Badge { Text("${dashboard?.newRequestsCount}") } }
-                                        ) {
-                                            Icon(Icons.Default.Notifications, null, tint = Color.White, modifier = Modifier.size(28.dp))
-                                        }
-                                    } else {
-                                        Icon(Icons.Default.Notifications, null, tint = Color.White, modifier = Modifier.size(28.dp))
-                                    }
-                                    Spacer(Modifier.width(8.dp))
-                                    Icon(Icons.Default.Settings, null, tint = Color.White, modifier = Modifier.size(28.dp))
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // ─── PROFILE COMPLETION CARD ────────────────────────────────────
-                val completion = dashboard?.profileCompletion ?: 0
-                item {
-                    DashboardCard(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(72.dp)) {
-                                CircularProgressIndicator(
-                                    progress = { completion / 100f },
-                                    modifier = Modifier.size(72.dp),
-                                    color = primaryColor,
-                                    trackColor = primaryColor.copy(alpha = 0.15f),
-                                    strokeWidth = 6.dp
-                                )
-                                Text("$completion%", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = primaryColor)
-                            }
-                            Spacer(Modifier.width(16.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Your Profile", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                    Spacer(Modifier.width(8.dp))
-                                    if (completion >= 80) {
-                                        Surface(shape = RoundedCornerShape(8.dp), color = Color(0xFF22C55E).copy(0.15f)) {
-                                            Text(" ✔ Verified ", fontSize = 11.sp, color = Color(0xFF22C55E), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
-                                        }
-                                    }
-                                }
-                                Spacer(Modifier.height(4.dp))
-                                Text(
-                                    if (completion >= 100) "Your profile is complete! 🎉"
-                                    else "Complete profile to get better matches",
-                                    fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                if (completion < 100) {
-                                    Spacer(Modifier.height(8.dp))
-                                    Button(
-                                        onClick = onCompleteProfileClick,
-                                        modifier = Modifier.height(32.dp),
-                                        contentPadding = PaddingValues(horizontal = 16.dp),
-                                        shape = RoundedCornerShape(8.dp)
-                                    ) { Text("Complete Now", fontSize = 12.sp) }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // ─── BEST MATCHES ────────────────────────────────────────────────
-                val matches = dashboard?.topMatches ?: emptyList()
-                if (matches.isNotEmpty()) {
-                    item {
-                        SectionHeader(title = "❤️ Best Matches For You", actionLabel = "See All")
-                    }
-                    item {
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(matches) { match ->
-                                MatchCard(match = match, onChat = { onNavigateToChat(match.user_id, match.name ?: "Roommate") })
-                            }
-                        }
-                    }
-                }
-
-                // ─── QUICK ACTIONS ───────────────────────────────────────────────
-                item { SectionHeader(title = "🎯 Quick Actions") }
-                item {
-                    val actions = listOf(
-                        Triple("Find Roommate", Icons.Default.Favorite, Color(0xFFE91E63)),
-                        Triple("Messages", Icons.Default.Email, Color(0xFF2196F3)),
-                        Triple("Events", Icons.Default.DateRange, Color(0xFF9C27B0)),
-                        Triple("Marketplace", Icons.Default.ShoppingCart, Color(0xFFFF9800)),
-                        Triple("Expenses", Icons.Default.List, Color(0xFF4CAF50)),
-                        Triple("Notices", Icons.Default.Notifications, Color(0xFFF44336)),
-                        Triple("Nearby", Icons.Default.LocationOn, Color(0xFF00BCD4)),
-                        Triple("AI", Icons.Default.Star, Color(0xFF673AB7))
-                    )
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(4),
-                        modifier = Modifier.fillMaxWidth().height(170.dp).padding(horizontal = 12.dp),
-                        userScrollEnabled = false,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(actions) { (label, icon, color) ->
-                            QuickActionItem(label = label, icon = icon, color = color, onClick = {})
-                        }
-                    }
-                }
-
-                // ─── NOTICE BOARD ────────────────────────────────────────────────
-                val notices = dashboard?.notices ?: emptyList()
-                if (notices.isNotEmpty()) {
-                    item { SectionHeader(title = "📢 Hostel Notice Board", actionLabel = "View All") }
-                    items(notices) { notice ->
-                        NoticeItem(notice = notice)
-                    }
-                }
-
-                // ─── UPCOMING EVENTS ─────────────────────────────────────────────
-                val events = dashboard?.events ?: emptyList()
-                if (events.isNotEmpty()) {
-                    item { SectionHeader(title = "🎉 Upcoming Events", actionLabel = "All Events") }
-                    item {
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(events) { event ->
-                                EventCard(event = event)
-                            }
-                        }
-                    }
-                }
-
-                // ─── MARKETPLACE PREVIEW ─────────────────────────────────────────
-                val market = dashboard?.marketplace ?: emptyList()
-                if (market.isNotEmpty()) {
-                    item { SectionHeader(title = "🛒 Marketplace", actionLabel = "Browse All") }
-                    item {
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(market) { item ->
-                                MarketplaceCard(item = item)
-                            }
-                        }
-                    }
-                }
-
-                // ─── EXPENSE SUMMARY ─────────────────────────────────────────────
-                val expBreakdown = dashboard?.expenseBreakdown ?: emptyList()
-                val expTotal = dashboard?.expenseTotal ?: 0
-                if (expTotal > 0 || expBreakdown.isNotEmpty()) {
-                    item { SectionHeader(title = "💰 Expense Summary") }
-                    item {
-                        DashboardCard(modifier = Modifier.padding(horizontal = 16.dp)) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text("This Month", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Spacer(Modifier.height(12.dp))
-                                expBreakdown.forEach { cat ->
-                                    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text(cat.category, fontSize = 14.sp)
-                                        Text("₹${cat.total.toInt()}", fontWeight = FontWeight.Medium, color = primaryColor)
-                                    }
-                                }
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Total", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                    Text("₹$expTotal", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = primaryColor)
-                                }
-                                Spacer(Modifier.height(8.dp))
-                                Text("View Details →", color = primaryColor, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                            }
-                        }
-                    }
-                }
-
-                // ─── NEARBY SERVICES ─────────────────────────────────────────────
-                item { SectionHeader(title = "📍 Nearby Services") }
-                item {
-                    val nearby = listOf(
-                        "Laundry" to Icons.Default.Refresh,
-                        "Medical" to Icons.Default.Info,
-                        "ATM" to Icons.Default.Star,
-                        "Cafe" to Icons.Default.Place,
-                        "Stationery" to Icons.Default.Edit,
-                        "Gym" to Icons.Default.Person
-                    )
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(nearby) { (label, icon) ->
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                RequestCounter(label = "Incoming", count = 0, color = primaryColor)
                                 Box(
                                     modifier = Modifier
-                                        .size(56.dp)
-                                        .background(primaryColor.copy(0.1f), CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(icon, null, tint = primaryColor, modifier = Modifier.size(26.dp))
-                                }
-                                Spacer(Modifier.height(6.dp))
-                                Text(label, fontSize = 12.sp, textAlign = TextAlign.Center)
-                            }
-                        }
-                    }
-                }
-
-                // ─── AI SUGGESTION ───────────────────────────────────────────────
-                val aiSuggestion = dashboard?.aiSuggestion
-                if (!aiSuggestion.isNullOrBlank()) {
-                    item { SectionHeader(title = "🤖 AI Suggestions") }
-                    item {
-                        DashboardCard(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            containerColor = primaryColor.copy(alpha = 0.08f)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                                        .width(1.dp)
+                                        .height(40.dp)
+                                        .background(Color(0xFFE2E8F0))
+                                )
+                                RequestCounter(label = "Sent", count = dashboard?.newRequestsCount ?: 1, color = Color(0xFF22C55E))
                                 Box(
-                                    modifier = Modifier.size(44.dp).background(primaryColor.copy(0.15f), CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("🤖", fontSize = 22.sp)
-                                }
-                                Spacer(Modifier.width(12.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("Good News!", fontWeight = FontWeight.Bold, color = primaryColor)
-                                    Spacer(Modifier.height(4.dp))
-                                    Text(aiSuggestion, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
-                                }
-                                Spacer(Modifier.width(8.dp))
-                                Button(onClick = {}, modifier = Modifier.height(32.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
-                                    Text("View", fontSize = 12.sp)
+                                    modifier = Modifier
+                                        .width(1.dp)
+                                        .height(40.dp)
+                                        .background(Color(0xFFE2E8F0))
+                                )
+                                RequestCounter(label = "Accepted", count = 0, color = Color(0xFF3B82F6))
+                            }
+                        }
+                    }
+                }
+
+                // ─── SECTION 5: COMPATIBILITY PROFILE ──────────────────────────
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = cardBgColor),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                text = "Your Compatibility Profile",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = Color(0xFF1E293B)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Your values, used to compare with potential roommates.",
+                                fontSize = 12.sp,
+                                color = Color(0xFF64748B)
+                            )
+                            Spacer(modifier = Modifier.height(18.dp))
+                            
+                            val scores = listOf(
+                                Triple("Lifestyle", 90, primaryColor),
+                                Triple("Study Habits", 80, secondaryColor),
+                                Triple("Cleanliness", 95, Color(0xFF10B981)),
+                                Triple("Budget", 85, Color(0xFFF59E0B)),
+                                Triple("Communication", 90, Color(0xFF6366F1))
+                            )
+                            
+                            scores.forEach { (label, value, color) ->
+                                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF475569))
+                                        Text("$value%", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = color)
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    LinearProgressIndicator(
+                                        progress = { value / 100f },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(6.dp)
+                                            .clip(RoundedCornerShape(3.dp)),
+                                        color = color,
+                                        trackColor = color.copy(alpha = 0.1f)
+                                    )
                                 }
                             }
                         }
                     }
                 }
 
-                item { Spacer(Modifier.height(16.dp)) }
-            }
-        }
-
-        // Profile Picture Dialog popup
-        if (showProfilePicDialog) {
-            Dialog(onDismissRequest = { showProfilePicDialog = false }) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                    border = BorderStroke(2.dp, primaryColor.copy(0.4f))
-                ) {
+                // ─── SECTION 6: QUICK ACTIONS ──────────────────────────────────
+                item {
                     Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
                     ) {
                         Text(
-                            text = "Customize Your Profile! ✨",
-                            fontSize = 20.sp,
+                            text = "Quick Actions",
                             fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
                             color = Color(0xFF1E293B)
                         )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = "Add a profile picture or choose an avatar to help roommates recognize you.",
-                            fontSize = 13.sp,
-                            color = Color(0xFF64748B),
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         
-                        // Main Avatar Circle
-                        Box(
-                            modifier = Modifier
-                                .size(100.dp)
-                                .background(primaryColor.copy(0.12f), CircleShape)
-                                .border(BorderStroke(3.dp, primaryColor), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (uploadInProgress) {
-                                CircularProgressIndicator(color = primaryColor, modifier = Modifier.size(36.dp))
-                            } else {
-                                Text(selectedAvatar, fontSize = 52.sp)
+                        val quickActions = listOf(
+                            Triple("Edit Profile", Icons.Default.Edit, primaryColor),
+                            Triple("Discover", Icons.Default.Search, Color(0xFF3B82F6)),
+                            Triple("Messages", Icons.Default.Email, Color(0xFF10B981)),
+                            Triple("Verification", Icons.Default.CheckCircle, Color(0xFFF59E0B)),
+                            Triple("Compatibility", Icons.Default.Favorite, Color(0xFFEC4899)),
+                            Triple("Support", Icons.Default.Info, Color(0xFF6366F1))
+                        )
+                        
+                        // Render 3 columns
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                QuickActionCard(action = quickActions[0])
+                                QuickActionCard(action = quickActions[1])
+                            }
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                QuickActionCard(action = quickActions[2])
+                                QuickActionCard(action = quickActions[3])
+                            }
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                QuickActionCard(action = quickActions[4])
+                                QuickActionCard(action = quickActions[5])
                             }
                         }
-                        Spacer(Modifier.height(16.dp))
+                    }
+                }
 
-                        // Detail summary
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = primaryColor.copy(0.08f),
-                            border = BorderStroke(1.dp, primaryColor.copy(0.2f)),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(12.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
+                // ─── SECTION 7: UNIVERSITY ANNOUNCEMENTS ───────────────────────
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = cardBgColor),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("🏛️", fontSize = 20.sp)
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = dashboard?.userName ?: "Student",
+                                    text = "University Notices",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 16.sp,
                                     color = Color(0xFF1E293B)
                                 )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "No announcements available.",
+                                fontSize = 12.sp,
+                                color = Color(0xFF64748B),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                            )
+                        }
+                    }
+                }
+
+                // ─── SECTION 8: HOSTEL ANNOUNCEMENTS ───────────────────────────
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = cardBgColor),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("🏢", fontSize = 20.sp)
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "✔ Verified Student",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF10B981)
-                                )
-                                Spacer(Modifier.height(4.dp))
-                                Text(
-                                    text = "${dashboard?.college?.take(30) ?: "College"} • ${dashboard?.hostel?.uppercase() ?: "Hostel"}",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF64748B)
+                                    text = "Hostel Notices",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF1E293B)
                                 )
                             }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "No notices available.",
+                                fontSize = 12.sp,
+                                color = Color(0xFF64748B),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                            )
                         }
-                        
-                        Spacer(Modifier.height(20.dp))
-                        
-                        // Avatar selection row
-                        Text("Select a quick avatar:", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF64748B))
-                        Spacer(Modifier.height(8.dp))
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            listOf("👩‍🎓", "👨‍🎓", "🧑‍💻", "🎨", "🌟", "🦁").forEach { avatar ->
-                                Box(
+                    }
+                }
+
+                // ─── SECTION 9: EMERGENCY SAFETY CENTER ────────────────────────
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF2F2)), // Soft red Safety Center background
+                        border = BorderStroke(1.dp, Color(0xFFFEE2E2)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("🚨", fontSize = 22.sp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Safety Center",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp,
+                                    color = Color(0xFF991B1B)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Quick access to verified emergency contacts.",
+                                fontSize = 12.sp,
+                                color = Color(0xFF7F1D1D).copy(0.7f)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            val emergencies = listOf(
+                                "Hostel Warden" to "📞 911-XXXX-XXX",
+                                "Security Office" to "📞 100-XXXX-XXX",
+                                "Medical Room" to "📞 108-XXXX-XXX",
+                                "Women Helpline" to "📞 1091",
+                                "Police Control" to "📞 100"
+                            )
+
+                            emergencies.forEach { (label, contact) ->
+                                Row(
                                     modifier = Modifier
-                                        .size(40.dp)
-                                        .background(
-                                            if (selectedAvatar == avatar) primaryColor.copy(0.25f) else Color(0xFFF1F5F9),
-                                            CircleShape
-                                        )
-                                        .border(
-                                            BorderStroke(
-                                                2.dp,
-                                                if (selectedAvatar == avatar) primaryColor else Color.Transparent
-                                            ),
-                                            CircleShape
-                                        )
-                                        .clickable { selectedAvatar = avatar },
-                                    contentAlignment = Alignment.Center
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(avatar, fontSize = 20.sp)
+                                    Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF991B1B))
+                                    Text(contact, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF7F1D1D))
                                 }
                             }
                         }
-                        
-                        Spacer(Modifier.height(24.dp))
-                        
-                        // Action Buttons
-                        Button(
-                            onClick = {
-                                uploadInProgress = true
-                                scope.launch {
-                                    kotlinx.coroutines.delay(1800) // Simulating upload delay
-                                    uploadInProgress = false
-                                    showProfilePicDialog = false
-                                }
-                            },
-                            enabled = !uploadInProgress,
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth().height(48.dp)
+                    }
+                }
+
+                // ─── SECTION 10: WHAT'S NEW & FOOTER ───────────────────────────
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color(0xFFF8FAFC),
+                            border = BorderStroke(1.dp, Color(0xFFF1F5F9)),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Save & Complete", fontWeight = FontWeight.Bold)
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "What's New in Homigo",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF1E293B)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "• Version 1.0 Live Release\n• Added detailed interests & lifestyle matching\n• Added university safety center contacts",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF64748B),
+                                    lineHeight = 18.sp
+                                )
+                            }
                         }
                         
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
                         
-                        TextButton(
-                            onClick = { showProfilePicDialog = false },
-                            enabled = !uploadInProgress,
-                            modifier = Modifier.fillMaxWidth().height(44.dp)
-                        ) {
-                            Text("Skip for Now", color = Color(0xFF64748B))
-                        }
+                        Text(
+                            text = "Homigo",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 16.sp,
+                            color = Color(0xFF94A3B8)
+                        )
+                        Text(
+                            text = "Version 1.0 • Privacy Policy • Terms",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF94A3B8)
+                        )
                     }
                 }
             }
@@ -524,221 +680,82 @@ fun HomeScreen(
     }
 }
 
-// ─── REUSABLE COMPONENTS ──────────────────────────────────────────────────────
+// ─── HELPER COMPONENTS ─────────────────────────────────────────────────────────
 
 @Composable
-private fun DashboardCard(
-    modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surface,
-    content: @Composable () -> Unit
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-    ) { content() }
-}
-
-@Composable
-private fun SectionHeader(title: String, actionLabel: String? = null) {
+private fun ChecklistItem(label: String, checked: Boolean) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(title, fontWeight = FontWeight.Bold, fontSize = 17.sp)
-        if (actionLabel != null) {
-            Text(actionLabel, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
-        }
+        Icon(
+            imageVector = if (checked) Icons.Default.CheckCircle else Icons.Default.Info,
+            contentDescription = null,
+            tint = if (checked) Color(0xFF10B981) else Color(0xFFCBD5E1),
+            modifier = Modifier.size(16.dp)
+        )
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = if (checked) Color(0xFF475569) else Color(0xFF94A3B8)
+        )
     }
 }
 
 @Composable
-private fun MatchCard(match: Profile, onChat: () -> Unit) {
-    val primaryColor = MaterialTheme.colorScheme.primary
-    // Simple compatibility score derived from profile similarity
-    val score = 85 + (match.user_id % 14)
-    Card(
-        modifier = Modifier.width(180.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(0.dp),
-        border = BorderStroke(1.dp, primaryColor.copy(0.25f))
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Box(
-                modifier = Modifier.size(52.dp).background(primaryColor.copy(0.12f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = if ((match.gender ?: "male") == "female") "👩" else "👨",
-                    fontSize = 26.sp
-                )
-            }
-            Spacer(Modifier.height(10.dp))
-            Text(match.name?.split(" ")?.firstOrNull() ?: "Student", fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
-            Text(match.course ?: "Student", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-            Text(match.hostel?.uppercase() ?: "", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(8.dp))
-            Surface(shape = RoundedCornerShape(6.dp), color = primaryColor.copy(0.15f)) {
-                Text("  $score% Match  ", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = primaryColor, modifier = Modifier.padding(2.dp))
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Button(onClick = {}, modifier = Modifier.weight(1f).height(30.dp), contentPadding = PaddingValues(0.dp)) {
-                    Text("View", fontSize = 11.sp)
-                }
-                OutlinedButton(onClick = onChat, modifier = Modifier.weight(1f).height(30.dp), contentPadding = PaddingValues(0.dp)) {
-                    Text("Chat", fontSize = 11.sp)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun QuickActionItem(label: String, icon: ImageVector, color: Color, onClick: () -> Unit) {
+private fun RequestCounter(label: String, count: Int, color: Color) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable(onClick = onClick)
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        Box(
-            modifier = Modifier.size(50.dp).background(color.copy(0.12f), RoundedCornerShape(14.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, null, tint = color, modifier = Modifier.size(24.dp))
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(label, fontSize = 10.sp, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(
+            text = "$count",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = color
+        )
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF64748B)
+        )
     }
 }
 
 @Composable
-private fun NoticeItem(notice: Notice) {
-    val typeColor = when (notice.type) {
-        "maintenance" -> Color(0xFFFF9800)
-        "event" -> Color(0xFF9C27B0)
-        "mess" -> Color(0xFF4CAF50)
-        "technical" -> Color(0xFF2196F3)
-        else -> MaterialTheme.colorScheme.primary
-    }
-    val typeIcon = when (notice.type) {
-        "maintenance" -> "🔧"
-        "event" -> "🎉"
-        "mess" -> "🍽️"
-        "technical" -> "📶"
-        else -> "📌"
-    }
-    Row(
+private fun QuickActionCard(action: Triple<String, ImageVector, Color>) {
+    val (label, icon, color) = action
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-            .border(1.dp, typeColor.copy(0.3f), RoundedCornerShape(12.dp))
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clickable {}
     ) {
-        Text(typeIcon, fontSize = 24.sp)
-        Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(notice.title, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(2.dp))
-            Text(notice.content, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        }
-    }
-}
-
-@Composable
-private fun EventCard(event: Event) {
-    val typeColor = when (event.type) {
-        "sports" -> Color(0xFF4CAF50)
-        "academic" -> Color(0xFF2196F3)
-        "cultural" -> Color(0xFF9C27B0)
-        "wellness" -> Color(0xFF00BCD4)
-        else -> MaterialTheme.colorScheme.primary
-    }
-    val typeEmoji = when (event.type) {
-        "sports" -> "🏏"
-        "academic" -> "💻"
-        "cultural" -> "🎭"
-        "wellness" -> "🧘"
-        else -> "📅"
-    }
-    Card(
-        modifier = Modifier.width(200.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(0.dp),
-        border = BorderStroke(1.dp, typeColor.copy(0.3f))
-    ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(typeEmoji, fontSize = 28.sp)
-                Spacer(Modifier.width(8.dp))
-                Column {
-                    Text(event.name, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Surface(shape = RoundedCornerShape(6.dp), color = typeColor.copy(0.1f)) {
-                        Text(" ${event.type.replaceFirstChar { it.uppercase() }} ", fontSize = 11.sp, color = typeColor, modifier = Modifier.padding(vertical = 1.dp))
-                    }
-                }
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.DateRange, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
-                Spacer(Modifier.width(4.dp))
-                Text(event.date, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.DateRange, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
-                Spacer(Modifier.width(4.dp))
-                Text(event.time, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.LocationOn, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
-                Spacer(Modifier.width(4.dp))
-                Text(event.location, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-            Spacer(Modifier.height(8.dp))
-            Button(
-                onClick = {},
-                modifier = Modifier.fillMaxWidth().height(32.dp),
-                contentPadding = PaddingValues(0.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = typeColor)
-            ) { Text("Register", fontSize = 12.sp) }
-        }
-    }
-}
-
-@Composable
-private fun MarketplaceCard(item: MarketplaceItem) {
-    Card(
-        modifier = Modifier.width(160.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(0.4f))
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            val catEmoji = when (item.category) {
-                "Transport" -> "🚲"
-                "Furniture" -> "🪑"
-                "Books" -> "📚"
-                "Appliances" -> "❄️"
-                "Electronics" -> "💡"
-                "Sports" -> "🏸"
-                else -> "🛍️"
-            }
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
             Box(
-                modifier = Modifier.fillMaxWidth().height(72.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp)),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(color.copy(alpha = 0.1f), CircleShape)
             ) {
-                Text(catEmoji, fontSize = 36.sp)
+                Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
             }
-            Spacer(Modifier.height(8.dp))
-            Text(item.title, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(item.hostel, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(4.dp))
-            Text("₹${item.price.toInt()}", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }

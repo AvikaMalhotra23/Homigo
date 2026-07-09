@@ -155,7 +155,6 @@ private data class BottomTab(
 private val tabs = listOf(
     BottomTab("Home",     Icons.Filled.Home,       Icons.Outlined.Home),
     BottomTab("Discover", Icons.Filled.Search,      Icons.Outlined.Search),
-    BottomTab("Matches",  Icons.Filled.Favorite,    Icons.Outlined.FavoriteBorder),
     BottomTab("Chat",     Icons.Filled.Email,       Icons.Outlined.Email),
     BottomTab("Profile",  Icons.Filled.AccountCircle, Icons.Outlined.AccountCircle)
 )
@@ -220,12 +219,11 @@ fun MainTabScreen(
                 when (tab) {
                     0 -> HomeScreen(
                         onNavigateToChat = onNavigateToChat,
-                        onCompleteProfileClick = { selectedTab = 4 }
+                        onCompleteProfileClick = { selectedTab = 3 }
                     )
                     1 -> ExploreScreen()
-                    2 -> RequestsScreen()
-                    3 -> ChatListScreen(onNavigateToChat = onNavigateToChat)
-                    4 -> ProfileSetupScreen(onSetupComplete = {})
+                    2 -> ChatListScreen(onNavigateToChat = onNavigateToChat)
+                    3 -> ProfileSetupScreen(onSetupComplete = {})
                 }
             }
         }
