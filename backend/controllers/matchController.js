@@ -123,13 +123,41 @@ function calculateCompatibility(a, b) {
     }
   }
 
-  const overall = Math.round(
+  // F. Roommate Deal Breakers Penalty (Drop score automatically on conflict)
+  let dealBreakerPenalty = 0;
+  try {
+    const aBreakers = JSON.parse(a.deal_breakers || '[]');
+    const bBreakers = JSON.parse(b.deal_breakers || '[]');
+
+    // Check A's deal breakers against B's profile
+    aBreakers.forEach(db => {
+      if (db.includes("No Smokers") && b.smoking !== 'no' && b.smoking !== 'Never') dealBreakerPenalty += 15;
+      if (db.includes("No Alcohol") && b.drinking !== 'no' && b.drinking !== 'Never') dealBreakerPenalty += 15;
+      if (db.includes("Must Keep Room Clean") && (b.cleanliness === 'low' || b.cleanliness === 'moderate' || b.cleanliness === "Doesn't Matter Much")) dealBreakerPenalty += 15;
+      if (db.includes("No Pets") && b.pets === 'yes') dealBreakerPenalty += 15;
+      if (db.includes("No Frequent Guests") && b.guests === 'frequent') dealBreakerPenalty += 15;
+    });
+
+    // Check B's deal breakers against A's profile
+    bBreakers.forEach(db => {
+      if (db.includes("No Smokers") && a.smoking !== 'no' && a.smoking !== 'Never') dealBreakerPenalty += 15;
+      if (db.includes("No Alcohol") && a.drinking !== 'no' && a.drinking !== 'Never') dealBreakerPenalty += 15;
+      if (db.includes("Must Keep Room Clean") && (a.cleanliness === 'low' || a.cleanliness === 'moderate' || a.cleanliness === "Doesn't Matter Much")) dealBreakerPenalty += 15;
+      if (db.includes("No Pets") && a.pets === 'yes') dealBreakerPenalty += 15;
+      if (db.includes("No Frequent Guests") && a.guests === 'frequent') dealBreakerPenalty += 15;
+    });
+  } catch (e) {
+    console.error("Error calculating deal breaker penalty:", e);
+  }
+
+  const overall = Math.max(0, Math.round(
     budgetScore * 0.2 +
     sleepScore * 0.2 +
     lifestyleScore * 0.2 +
     cleanScore * 0.2 +
-    socialScore * 0.2
-  );
+    socialScore * 0.2 -
+    dealBreakerPenalty
+  ));
 
   return {
     overall,

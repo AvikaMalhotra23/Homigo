@@ -59,8 +59,26 @@ function createTables() {
     is_verified INTEGER DEFAULT 0, -- 0 for false, 1 for true
     id_proof_url TEXT,
     fake_risk_score REAL DEFAULT 0.0,
+    deal_breakers TEXT,
+    room_purpose TEXT,
+    wake_up_time TEXT,
+    study_style TEXT,
+    room_environment TEXT,
+    personality_type TEXT,
+    daily_routine TEXT,
+    work_style TEXT,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
   )`);
+
+  // Dynamically add columns to existing databases if needed
+  db.run(`ALTER TABLE profiles ADD COLUMN deal_breakers TEXT`, (err) => {});
+  db.run(`ALTER TABLE profiles ADD COLUMN room_purpose TEXT`, (err) => {});
+  db.run(`ALTER TABLE profiles ADD COLUMN wake_up_time TEXT`, (err) => {});
+  db.run(`ALTER TABLE profiles ADD COLUMN study_style TEXT`, (err) => {});
+  db.run(`ALTER TABLE profiles ADD COLUMN room_environment TEXT`, (err) => {});
+  db.run(`ALTER TABLE profiles ADD COLUMN personality_type TEXT`, (err) => {});
+  db.run(`ALTER TABLE profiles ADD COLUMN daily_routine TEXT`, (err) => {});
+  db.run(`ALTER TABLE profiles ADD COLUMN work_style TEXT`, (err) => {});
 
   // Roommate Requests table
   db.run(`CREATE TABLE IF NOT EXISTS requests (

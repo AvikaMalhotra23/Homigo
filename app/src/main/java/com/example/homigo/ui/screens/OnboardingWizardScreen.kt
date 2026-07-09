@@ -213,17 +213,23 @@ fun OnboardingWizardScreen(
     var moveInDate by remember { mutableStateOf("") }
 
     // Lifestyle Preferences
-    var foodPref by remember { mutableStateOf("Vegetarian") }
-    var sleepSchedule by remember { mutableStateOf("early_bird") }
-    var studyHabits by remember { mutableStateOf("Silent") }
-    var cleanlinessRating by remember { mutableStateOf(3f) } // slider 1-5
-    var smokingPref by remember { mutableStateOf("no") }
-    var drinkingPref by remember { mutableStateOf("no") }
-    var guestsPref by remember { mutableStateOf("rarely") }
-    var petsPref by remember { mutableStateOf("okay") }
+    var foodPref by remember { mutableStateOf("🥗 Vegetarian") }
+    var sleepSchedule by remember { mutableStateOf("⏰ Flexible") }
+    var studyHabits by remember { mutableStateOf("📚 Silent Study") }
+    var cleanliness by remember { mutableStateOf("🧹 Moderately Clean") }
+    var smokingPref by remember { mutableStateOf("🚭 Never") }
+    var drinkingPref by remember { mutableStateOf("❌ Never") }
+    var guestsPref by remember { mutableStateOf("👥 Occasionally") }
+    var wakeUpTime by remember { mutableStateOf("⏰ 6–8 AM") }
+    var roomEnvironment by remember { mutableStateOf("🔊 Some Noise is Fine") }
+    var personalityType by remember { mutableStateOf("😌 Ambivert") }
+    var dailyRoutine by remember { mutableStateOf("⚖️ Balanced") }
+    var workStyle by remember { mutableStateOf("📖 Academics First") }
 
-    // Interests & Bio details
+    // Interests, Bio, Deal Breakers & Room Purpose
     var selectedInterests by remember { mutableStateOf(setOf<String>()) }
+    var selectedDealBreakers by remember { mutableStateOf(setOf<String>()) }
+    var selectedRoomPurposes by remember { mutableStateOf(setOf<String>()) }
     var monthlyBudget by remember { mutableStateOf("₹4000 — ₹6000") }
     var selectedLanguages by remember { mutableStateOf(setOf<String>()) }
     var hometownState by remember { mutableStateOf("Choose State") }
@@ -343,8 +349,27 @@ fun OnboardingWizardScreen(
                                 5 -> StepBasicDetails(fullName = fullName, onNameChanged = { fullName = it }, email = email, onEmailChanged = { email = it }, phone = phone, onPhoneChanged = { phone = it }, password = password, onPasswordChanged = { password = it }, confirmPassword = confirmPassword, onConfirmChanged = { confirmPassword = it }, onNext = { currentStep = 6 })
                                 6 -> StepAcademicDetails(selectedCollege = selectedCollege, course = selectedCourse, onCourseChanged = { selectedCourse = it }, branch = selectedBranch, onBranchChanged = { selectedBranch = it }, year = selectedYear, onYearChanged = { selectedYear = it }, semester = selectedSemester, onSemesterChanged = { selectedSemester = it }, selectedSchool = selectedSchool, onSchoolChanged = { selectedSchool = it }, onNext = { currentStep = 7 })
                                 7 -> StepAccommodationSetup(gender = gender, selectedCollege = selectedCollege, lookingFor = lookingFor, onLookingForChanged = { lookingFor = it }, preferredHostel = preferredHostel, onPreferredChanged = { preferredHostel = it }, currentHostel = currentHostel, onCurrentChanged = { currentHostel = it }, roomNumber = currentRoomNumber, onRoomChanged = { currentRoomNumber = it }, moveInDate = moveInDate, onMoveInChanged = { moveInDate = it }, onNext = { currentStep = 8 })
-                                8 -> StepLifestylePreferences(foodPref = foodPref, onFoodChanged = { foodPref = it }, sleepSchedule = sleepSchedule, onSleepChanged = { sleepSchedule = it }, studyHabits = studyHabits, onStudyChanged = { studyHabits = it }, cleanliness = cleanlinessRating, onCleanlinessChanged = { cleanlinessRating = it }, smoking = smokingPref, onSmokingChanged = { smokingPref = it }, drinking = drinkingPref, onDrinkingChanged = { drinkingPref = it }, guests = guestsPref, onGuestsChanged = { guestsPref = it }, pets = petsPref, onPetsChanged = { petsPref = it }, cardSelectedColor = cardSelectedColor, onNext = { currentStep = 9 })
-                                9 -> StepInterestsSelection(selectedInterests = selectedInterests, onInterestsChanged = { selectedInterests = it }, cardSelectedColor = cardSelectedColor, onNext = { currentStep = 10 })
+                                8 -> StepLifestylePreferences(
+                                    foodPref = foodPref, onFoodChanged = { foodPref = it },
+                                    sleepSchedule = sleepSchedule, onSleepChanged = { sleepSchedule = it },
+                                    studyHabits = studyHabits, onStudyChanged = { studyHabits = it },
+                                    cleanliness = cleanliness, onCleanlinessChanged = { cleanliness = it },
+                                    smoking = smokingPref, onSmokingChanged = { smokingPref = it },
+                                    drinking = drinkingPref, onDrinkingChanged = { drinkingPref = it },
+                                    guests = guestsPref, onGuestsChanged = { guestsPref = it },
+                                    wakeUpTime = wakeUpTime, onWakeUpChanged = { wakeUpTime = it },
+                                    roomEnvironment = roomEnvironment, onRoomEnvChanged = { roomEnvironment = it },
+                                    personalityType = personalityType, onPersonalityChanged = { personalityType = it },
+                                    dailyRoutine = dailyRoutine, onDailyRoutineChanged = { dailyRoutine = it },
+                                    workStyle = workStyle, onWorkStyleChanged = { workStyle = it },
+                                    onNext = { currentStep = 9 }
+                                )
+                                9 -> StepInterestsSelection(
+                                    selectedInterests = selectedInterests, onInterestsChanged = { selectedInterests = it },
+                                    selectedDealBreakers = selectedDealBreakers, onDealBreakersChanged = { selectedDealBreakers = it },
+                                    selectedRoomPurposes = selectedRoomPurposes, onRoomPurposesChanged = { selectedRoomPurposes = it },
+                                    onNext = { currentStep = 10 }
+                                )
                                 10 -> StepBudgetAndBio(selectedLanguages = selectedLanguages, onLanguagesChanged = { selectedLanguages = it }, hometown = hometownState, onHometownChanged = { hometownState = it }, isForeign = foreignNational, onForeignChanged = { foreignNational = it }, bio = userBio, onBioChanged = { userBio = it }, onNext = { currentStep = 11 })
                                 11 -> StepAICompatibilityCalculation(
                                     isLoading = isLoading,
@@ -387,14 +412,22 @@ fun OnboardingWizardScreen(
                                                     "hometown" to hometownState,
                                                     "budget_min" to if (monthlyBudget.contains("2000")) 2000 else if (monthlyBudget.contains("4000")) 4000 else 6000,
                                                     "budget_max" to if (monthlyBudget.contains("2000")) 4000 else if (monthlyBudget.contains("4000")) 6000 else 15000,
-                                                    "sleep_schedule" to sleepSchedule,
-                                                    "smoking" to smokingPref,
-                                                    "drinking" to drinkingPref,
-                                                    "food_preference" to (if (foodPref == "Vegetarian") "veg" else if (foodPref == "Non Vegetarian") "non_veg" else "any"),
-                                                    "cleanliness" to (if (cleanlinessRating > 4) "high" else if (cleanlinessRating > 2) "moderate" else "low"),
-                                                    "pets" to (if (petsPref != "no") "yes" else "no"),
-                                                    "guests" to (if (guestsPref == "often") "frequent" else if (guestsPref == "sometimes") "rare" else "no"),
-                                                    "bio" to userBio
+                                                    "sleep_schedule" to (if (sleepSchedule.contains("Early")) "early_bird" else if (sleepSchedule.contains("Night")) "night_owl" else "flexible"),
+                                                    "smoking" to (if (smokingPref.contains("Never")) "no" else if (smokingPref.contains("Occasionally")) "occasionally" else "yes"),
+                                                    "drinking" to (if (drinkingPref.contains("Never")) "no" else if (drinkingPref.contains("Occasionally")) "occasionally" else "yes"),
+                                                    "food_preference" to (if (foodPref.contains("Vegetarian")) "veg" else if (foodPref.contains("Non-Vegetarian") || foodPref.contains("Non Vegetarian")) "non_veg" else "any"),
+                                                    "cleanliness" to (if (cleanliness.contains("Very")) "high" else if (cleanliness.contains("Moderately")) "moderate" else "low"),
+                                                    "pets" to "no",
+                                                    "guests" to (if (guestsPref.contains("Frequently")) "frequent" else if (guestsPref.contains("Occasionally")) "rare" else "no"),
+                                                    "bio" to userBio,
+                                                    "deal_breakers" to selectedDealBreakers.toList(),
+                                                    "room_purpose" to selectedRoomPurposes.toList(),
+                                                    "wake_up_time" to wakeUpTime,
+                                                    "study_style" to studyHabits,
+                                                    "room_environment" to roomEnvironment,
+                                                    "personality_type" to personalityType,
+                                                    "daily_routine" to dailyRoutine,
+                                                    "work_style" to workStyle
                                                 )
                                                 HomigoRepository.updateProfile(profilePayload)
                                                 isLoading = false
@@ -2117,144 +2150,63 @@ private fun StepLifestylePreferences(
     foodPref: String, onFoodChanged: (String) -> Unit,
     sleepSchedule: String, onSleepChanged: (String) -> Unit,
     studyHabits: String, onStudyChanged: (String) -> Unit,
-    cleanliness: Float, onCleanlinessChanged: (Float) -> Unit,
+    cleanliness: String, onCleanlinessChanged: (String) -> Unit,
     smoking: String, onSmokingChanged: (String) -> Unit,
     drinking: String, onDrinkingChanged: (String) -> Unit,
     guests: String, onGuestsChanged: (String) -> Unit,
-    pets: String, onPetsChanged: (String) -> Unit,
-    cardSelectedColor: Color,
+    wakeUpTime: String, onWakeUpChanged: (String) -> Unit,
+    roomEnvironment: String, onRoomEnvChanged: (String) -> Unit,
+    personalityType: String, onPersonalityChanged: (String) -> Unit,
+    dailyRoutine: String, onDailyRoutineChanged: (String) -> Unit,
+    workStyle: String, onWorkStyleChanged: (String) -> Unit,
     onNext: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
         Text("Lifestyle Preferences", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Text("These details affect roommate compatibility. Please answer accurately.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Food Preference (Big Cards)
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Food Preference", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Vegetarian", "Non Vegetarian", "Eggetarian").forEach { opt ->
-                    val isSel = foodPref == opt
-                    PremiumSelectedCard(
-                        selected = isSel,
-                        onClick = { onFoodChanged(opt) },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Box(modifier = Modifier.padding(14.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            Text(opt, fontSize = 12.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                        }
-                    }
-                }
-            }
-        }
-
-        // Sleep Habits
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Sleep Habits", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(Pair("early_bird", "Early 🌙"), Pair("night_owl", "Late 🌃")).forEach { opt ->
-                    val isSel = sleepSchedule == opt.first
-                    PremiumSelectedCard(
-                        selected = isSel,
-                        onClick = { onSleepChanged(opt.first) },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Box(modifier = Modifier.padding(14.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            Text(opt.second, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
-
-        // Study habits
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Study Environment", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Silent 📚", "Music 🎵").forEach { opt ->
-                    val isSel = studyHabits == opt.substringBefore(" ")
-                    PremiumSelectedCard(
-                        selected = isSel,
-                        onClick = { onStudyChanged(opt.substringBefore(" ")) },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Box(modifier = Modifier.padding(14.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            Text(opt, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
-
-        // Cleanliness Slider
-        Column {
-            Text("Cleanliness rating: ${cleanliness.toInt()}/5", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Slider(
-                value = cleanliness,
-                onValueChange = onCleanlinessChanged,
-                valueRange = 1f..5f,
-                steps = 3,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        // Smoking & Drinking Side-by-Side
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Smoking", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf("no", "occasionally", "yes").forEach { opt ->
+        @OptIn(ExperimentalLayoutApi::class)
+        @Composable
+        fun PreferenceSection(title: String, current: String, options: List<String>, onSelected: (String) -> Unit) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    options.forEach { opt ->
                         FilterChip(
-                            selected = smoking == opt,
-                            onClick = { onSmokingChanged(opt) },
-                            label = { Text(opt, fontSize = 11.sp) }
-                        )
-                    }
-                }
-            }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Drinking", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf("no", "occasionally", "yes").forEach { opt ->
-                        FilterChip(
-                            selected = drinking == opt,
-                            onClick = { onDrinkingChanged(opt) },
-                            label = { Text(opt, fontSize = 11.sp) }
+                            selected = current == opt,
+                            onClick = { onSelected(opt) },
+                            label = { Text(opt) }
                         )
                     }
                 }
             }
         }
 
-        // Guests & Pets Side-by-Side
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Guests Frequency", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf("rarely", "sometimes", "often").forEach { opt ->
-                        FilterChip(
-                            selected = guests == opt,
-                            onClick = { onGuestsChanged(opt) },
-                            label = { Text(opt, fontSize = 11.sp) }
-                        )
-                    }
-                }
-            }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Pets Preference", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf("no", "okay", "yes").forEach { opt ->
-                        FilterChip(
-                            selected = pets == opt,
-                            onClick = { onPetsChanged(opt) },
-                            label = { Text(if(opt=="yes") "love" else opt, fontSize = 11.sp) }
-                        )
-                    }
-                }
-            }
-        }
+        PreferenceSection("🌅 Sleep Schedule", sleepSchedule, listOf("🌅 Early Sleeper (Before 10 PM)", "🌃 Night Owl (After 12 AM)", "⏰ Flexible"), onSleepChanged)
+        PreferenceSection("🌞 Wake-up Time", wakeUpTime, listOf("🌞 Before 6 AM", "⏰ 6–8 AM", "🌤 After 8 AM"), onWakeUpChanged)
+        PreferenceSection("📚 Study Style", studyHabits, listOf("📚 Silent Study", "🎵 Study with Music", "👥 Group Study", "🌙 Late Night Study", "☀️ Morning Study"), onStudyChanged)
+        PreferenceSection("🤫 Room Environment", roomEnvironment, listOf("🤫 Very Quiet", "🔊 Some Noise is Fine", "🎶 Background Music is Okay"), onRoomEnvChanged)
+        PreferenceSection("✨ Cleanliness", cleanliness, listOf("✨ Very Clean", "🧹 Moderately Clean", "😅 Doesn't Matter Much"), onCleanlinessChanged)
+        PreferenceSection("👥 Visitors", guests, listOf("🚫 No Visitors", "👥 Occasionally", "🎉 Frequently"), onGuestsChanged)
+        PreferenceSection("🥗 Food", foodPref, listOf("🥗 Vegetarian", "🍗 Non-Vegetarian", "🥚 Eggetarian", "🌱 Vegan"), onFoodChanged)
+        PreferenceSection("🚭 Smoking", smoking, listOf("🚭 Never", "🚬 Occasionally", "🚬 Regularly"), onSmokingChanged)
+        PreferenceSection("🍹 Drinking", drinking, listOf("❌ Never", "🍹 Occasionally", "🍺 Socially"), onDrinkingChanged)
+        PreferenceSection("😄 Personality", personalityType, listOf("😄 Extrovert", "😊 Introvert", "😌 Ambivert"), onPersonalityChanged)
+        PreferenceSection("📅 Daily Routine", dailyRoutine, listOf("📅 Highly Organized", "⚖️ Balanced", "🌊 Go With the Flow"), onDailyRoutineChanged)
+        PreferenceSection("💼 Work Style", workStyle, listOf("💻 Remote Internships", "📖 Academics First", "🚀 Startup Focus", "💼 Preparing for Placements", "📚 Higher Studies"), onWorkStyleChanged)
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         Button(
             onClick = onNext,
             shape = RoundedCornerShape(12.dp),
@@ -2266,53 +2218,175 @@ private fun StepLifestylePreferences(
 }
 
 @Composable
-private fun StepInterestsSelection(selectedInterests: Set<String>, onInterestsChanged: (Set<String>) -> Unit, cardSelectedColor: Color, onNext: () -> Unit) {
-    val interestsList = listOf(
-        "🎮 Gaming", "🏋️ Gym", "⚽ Sports", "🎵 Music", 
-        "📚 Reading", "🎬 Movies", "✈️ Travelling", "💻 Coding", 
-        "📸 Photography", "🎨 Art", "🍳 Cooking", "🎤 Singing"
+private fun StepInterestsSelection(
+    selectedInterests: Set<String>, onInterestsChanged: (Set<String>) -> Unit,
+    selectedDealBreakers: Set<String>, onDealBreakersChanged: (Set<String>) -> Unit,
+    selectedRoomPurposes: Set<String>, onRoomPurposesChanged: (Set<String>) -> Unit,
+    onNext: () -> Unit
+) {
+    var currentPage by remember { mutableStateOf(1) }
+
+    val categoriesMap = mapOf(
+        "💻 Tech & Career" to listOf("💻 Coding", "🤖 Artificial Intelligence", "🎮 Game Development", "🌐 Web Development", "📱 App Development", "🔐 Cybersecurity", "☁️ Cloud Computing", "📊 Data Science", "🎨 UI/UX Design", "🛠 Hackathons", "🚀 Startups", "💼 Entrepreneurship"),
+        "🎬 Content Creation" to listOf("📹 YouTube Creator", "🎥 Video Editing", "📸 Photography", "📱 Instagram Creator", "🎵 Reels/Shorts Creator", "🎙 Podcasting", "✍️ Blogging", "🎨 Graphic Design", "🎬 Filmmaking", "🎧 Music Production", "🎤 Live Streaming", "📺 Vlogging"),
+        "🎮 Gaming" to listOf("🎮 Mobile Gaming", "🖥 PC Gaming", "🎯 Competitive Gaming", "🎲 Casual Gaming", "🕹 Console Gaming", "♟ Board Games"),
+        "📚 Study & Learning" to listOf("📖 Reading Books", "📚 Group Study", "✍️ Competitive Exams", "🌍 Learning Languages", "🧠 Research", "📝 Writing Notes"),
+        "🏃 Fitness & Sports" to listOf("🏋️ Gym", "🧘 Yoga", "🏃 Running", "🚴 Cycling", "🏊 Swimming", "⚽ Football", "🏏 Cricket", "🏸 Badminton", "🏀 Basketball", "🎾 Tennis", "🥋 Martial Arts"),
+        "🎵 Music & Entertainment" to listOf("🎧 Listening to Music", "🎤 Singing", "🎸 Guitar", "🎹 Piano", "🥁 Drums", "🎻 Violin", "💃 Dancing", "🎭 Acting", "🎬 Movies", "📺 Anime", "📖 Manga"),
+        "🌍 Lifestyle" to listOf("✈️ Travelling", "☕ Cafe Hopping", "🍳 Cooking", "🍰 Baking", "🌱 Gardening", "🛍 Shopping", "🐶 Animal Lover", "🌿 Nature Lover"),
+        "🎨 Creative Arts" to listOf("🎨 Painting", "✏️ Sketching", "🧵 DIY Crafts", "📷 Photo Editing", "🖌 Digital Art", "🏺 Pottery"),
+        "🤝 Social" to listOf("🎉 Partying", "🎲 Board Game Nights", "☕ Hanging Out", "🤝 Networking", "❤️ Volunteering", "🎤 Public Speaking")
     )
 
-    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-        Text("Choose Interests", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("Select multiple interests that describe you best", fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
-        Spacer(modifier = Modifier.height(24.dp))
+    val dealBreakersList = listOf(
+        "🚭 No Smokers", "🍺 No Alcohol", "🔊 No Loud Music", "🎉 No Late-Night Parties",
+        "🧹 Must Keep Room Clean", "🐶 No Pets", "🚫 No Frequent Guests", "😴 Don't Disturb My Sleep",
+        "📚 Need Quiet Study Time", "📹 I Create Content, Need Recording Time", "🎮 No Gaming After Midnight",
+        "📞 No Loud Phone Calls", "🚬 No Vaping", "💡 Lights Off Before Sleeping", "🌅 Prefer Early Morning Routine"
+    )
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier.height(340.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    val roomPurposesList = listOf(
+        "📚 Studying", "😴 Rest & Sleep", "💻 Coding / Projects", "🎥 Content Creation",
+        "🎮 Gaming", "🎨 Creative Work", "🧘 Relaxation", "👥 Socializing"
+    )
+
+    if (currentPage == 1) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(interestsList) { interest ->
-                val isSelected = selectedInterests.contains(interest)
-                PremiumSelectedCard(
-                    selected = isSelected,
-                    onClick = {
-                        if (isSelected) onInterestsChanged(selectedInterests - interest) else onInterestsChanged(selectedInterests + interest)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Box(modifier = Modifier.padding(18.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text(interest, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Text("Interests & Hobbies", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Text("Select multiple interests that describe you best", fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
+            Spacer(modifier = Modifier.height(4.dp))
+
+            @OptIn(ExperimentalLayoutApi::class)
+            @Composable
+            fun CategoryBlock(categoryName: String, items: List<String>) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(categoryName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.secondary)
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items.forEach { interest ->
+                            val isSel = selectedInterests.contains(interest)
+                            FilterChip(
+                                selected = isSel,
+                                onClick = {
+                                    if (isSel) onInterestsChanged(selectedInterests - interest)
+                                    else onInterestsChanged(selectedInterests + interest)
+                                },
+                                label = { Text(interest) }
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(32.dp))
-        AnimatedVisibility(
-            visible = selectedInterests.isNotEmpty(),
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
+            categoriesMap.forEach { (catName, items) ->
+                CategoryBlock(catName, items)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
             Button(
-                onClick = onNext,
+                onClick = { currentPage = 2 },
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth().height(52.dp)
             ) {
-                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Next: Deal Breakers", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text("Deal Breakers & Room Purpose", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Text("Help us filter out incompatible matches based on your deal breakers and room usage.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // 1. Roommate Deal Breakers Section
+            Text("🚫 Roommate Deal Breakers", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.error)
+            Text("Select everything you CANNOT accept in a roommate:", fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
+            
+            @OptIn(ExperimentalLayoutApi::class)
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                dealBreakersList.forEach { db ->
+                    val isSel = selectedDealBreakers.contains(db)
+                    FilterChip(
+                        selected = isSel,
+                        onClick = {
+                            if (isSel) onDealBreakersChanged(selectedDealBreakers - db)
+                            else onDealBreakersChanged(selectedDealBreakers + db)
+                        },
+                        label = { Text(db) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.errorContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider()
+
+            // 2. Room Purpose Section
+            Text("💡 Room Purpose (Choose up to 2)", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.secondary)
+            Text("What do you mainly use your room for?", fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
+
+            @OptIn(ExperimentalLayoutApi::class)
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                roomPurposesList.forEach { rp ->
+                    val isSel = selectedRoomPurposes.contains(rp)
+                    FilterChip(
+                        selected = isSel,
+                        onClick = {
+                            if (isSel) {
+                                onRoomPurposesChanged(selectedRoomPurposes - rp)
+                            } else {
+                                if (selectedRoomPurposes.size < 2) {
+                                    onRoomPurposesChanged(selectedRoomPurposes + rp)
+                                }
+                            }
+                        },
+                        label = { Text(rp) },
+                        enabled = isSel || selectedRoomPurposes.size < 2
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(
+                    onClick = { currentPage = 1 },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.weight(1f).height(52.dp)
+                ) {
+                    Text("Back to Hobbies")
+                }
+                Button(
+                    onClick = onNext,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.weight(1f).height(52.dp)
+                ) {
+                    Text("Continue", fontWeight = FontWeight.Bold)
+                }
             }
         }
     }
