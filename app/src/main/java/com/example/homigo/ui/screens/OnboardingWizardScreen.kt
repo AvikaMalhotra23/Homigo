@@ -28,6 +28,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
+import java.util.Calendar
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -339,7 +341,7 @@ fun OnboardingWizardScreen(
                                     }
                                 })
                                 5 -> StepBasicDetails(fullName = fullName, onNameChanged = { fullName = it }, email = email, onEmailChanged = { email = it }, phone = phone, onPhoneChanged = { phone = it }, password = password, onPasswordChanged = { password = it }, confirmPassword = confirmPassword, onConfirmChanged = { confirmPassword = it }, onNext = { currentStep = 6 })
-                                6 -> StepAcademicDetails(selectedCollege = selectedCollege, course = selectedCourse, onCourseChanged = { selectedCourse = it }, branch = selectedBranch, onBranchChanged = { selectedBranch = it }, year = selectedYear, onYearChanged = { selectedYear = it }, semester = selectedSemester, onSemesterChanged = { selectedSemester = it }, rollNumber = rollNumber, onRollChanged = { rollNumber = it }, selectedSchool = selectedSchool, onSchoolChanged = { selectedSchool = it }, onNext = { currentStep = 7 })
+                                6 -> StepAcademicDetails(selectedCollege = selectedCollege, course = selectedCourse, onCourseChanged = { selectedCourse = it }, branch = selectedBranch, onBranchChanged = { selectedBranch = it }, year = selectedYear, onYearChanged = { selectedYear = it }, semester = selectedSemester, onSemesterChanged = { selectedSemester = it }, selectedSchool = selectedSchool, onSchoolChanged = { selectedSchool = it }, onNext = { currentStep = 7 })
                                 7 -> StepAccommodationSetup(gender = gender, selectedCollege = selectedCollege, lookingFor = lookingFor, onLookingForChanged = { lookingFor = it }, preferredHostel = preferredHostel, onPreferredChanged = { preferredHostel = it }, currentHostel = currentHostel, onCurrentChanged = { currentHostel = it }, roomNumber = currentRoomNumber, onRoomChanged = { currentRoomNumber = it }, moveInDate = moveInDate, onMoveInChanged = { moveInDate = it }, onNext = { currentStep = 8 })
                                 8 -> StepLifestylePreferences(foodPref = foodPref, onFoodChanged = { foodPref = it }, sleepSchedule = sleepSchedule, onSleepChanged = { sleepSchedule = it }, studyHabits = studyHabits, onStudyChanged = { studyHabits = it }, cleanliness = cleanlinessRating, onCleanlinessChanged = { cleanlinessRating = it }, smoking = smokingPref, onSmokingChanged = { smokingPref = it }, drinking = drinkingPref, onDrinkingChanged = { drinkingPref = it }, guests = guestsPref, onGuestsChanged = { guestsPref = it }, pets = petsPref, onPetsChanged = { petsPref = it }, cardSelectedColor = cardSelectedColor, onNext = { currentStep = 9 })
                                 9 -> StepInterestsSelection(selectedInterests = selectedInterests, onInterestsChanged = { selectedInterests = it }, cardSelectedColor = cardSelectedColor, onNext = { currentStep = 10 })
@@ -1845,7 +1847,6 @@ private fun StepAcademicDetails(
     branch: String, onBranchChanged: (String) -> Unit,
     year: String, onYearChanged: (String) -> Unit,
     semester: Int, onSemesterChanged: (Int) -> Unit,
-    rollNumber: String, onRollChanged: (String) -> Unit,
     selectedSchool: String, onSchoolChanged: (String) -> Unit,
     onNext: () -> Unit
 ) {
@@ -1950,16 +1951,6 @@ private fun StepAcademicDetails(
             }
         }
 
-        // 5. Roll Number
-        Text("Roll Number (Optional)", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-        OutlinedTextField(
-            value = rollNumber,
-            onValueChange = onRollChanged,
-            label = { Text("Roll Number") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
         val isAcademicValid = course.isNotBlank() && course != "Choose Course" &&
                 branch.isNotBlank() && branch != "Choose Branch" &&
                 year.isNotBlank() &&
@@ -1995,6 +1986,21 @@ private fun StepAccommodationSetup(
 ) {
     var prefExpanded by remember { mutableStateOf(false) }
     var currExpanded by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+    val datePickerDialog = remember {
+        android.app.DatePickerDialog(
+            context,
+            { _, yr, monthOfYear, dayOfMonth ->
+                val monthNames = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+                onMoveInChanged("$dayOfMonth ${monthNames[monthOfYear]} $yr")
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+    }
 
     val hostels = remember(selectedCollege, gender) {
         if (selectedCollege == "Lovely Professional University") {
@@ -2060,13 +2066,29 @@ private fun StepAccommodationSetup(
             modifier = Modifier.fillMaxWidth()
         )
 
-        OutlinedTextField(
-            value = moveInDate,
-            onValueChange = onMoveInChanged,
-            label = { Text("Expected Move-in Date (e.g. Aug 2026)") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { datePickerDialog.show() }
+        ) {
+            OutlinedTextField(
+                value = moveInDate,
+                onValueChange = {},
+                readOnly = true,
+                enabled = false,
+                label = { Text("Expected Move-in Date") },
+                trailingIcon = {
+                    Icon(Icons.Default.DateRange, contentDescription = "Select Date")
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledBorderColor = MaterialTheme.colorScheme.outline,
+                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         val isAccommodationValid = lookingFor.isNotBlank() &&
                 preferredHostel.isNotBlank() &&
