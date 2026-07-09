@@ -2189,7 +2189,9 @@ private fun StepLifestylePreferences(
                                 Text(
                                     text = opt, 
                                     color = if (isSelected) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurface,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 15.sp,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
                                 ) 
                             },
                             colors = FilterChipDefaults.filterChipColors(
@@ -2315,7 +2317,27 @@ private fun StepInterestsSelection(
                                     if (isSel) onInterestsChanged(selectedInterests - interest)
                                     else onInterestsChanged(selectedInterests + interest)
                                 },
-                                label = { Text(interest) }
+                                label = { 
+                                    Text(
+                                        text = interest,
+                                        color = if (isSel) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                        fontSize = 15.sp,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
+                                    ) 
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Color.White,
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = isSel,
+                                    selectedBorderColor = Color(0xFF2E7D32),
+                                    selectedBorderWidth = 2.dp,
+                                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                    borderWidth = 1.dp
+                                )
                             )
                         }
                     }
@@ -2364,10 +2386,26 @@ private fun StepInterestsSelection(
                             if (isSel) onDealBreakersChanged(selectedDealBreakers - db)
                             else onDealBreakersChanged(selectedDealBreakers + db)
                         },
-                        label = { Text(db) },
+                        label = { 
+                            Text(
+                                text = db,
+                                fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 15.sp,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
+                            ) 
+                        },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.errorContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onErrorContainer
+                            selectedLabelColor = MaterialTheme.colorScheme.onErrorContainer,
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = isSel,
+                            selectedBorderColor = MaterialTheme.colorScheme.error,
+                            selectedBorderWidth = 2.dp,
+                            borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            borderWidth = 1.dp
                         )
                     )
                 }
@@ -2399,7 +2437,27 @@ private fun StepInterestsSelection(
                                 }
                             }
                         },
-                        label = { Text(rp) },
+                        label = { 
+                            Text(
+                                text = rp,
+                                color = if (isSel) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurface,
+                                fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 15.sp,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
+                            ) 
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color.White,
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = isSel,
+                            selectedBorderColor = Color(0xFF2E7D32),
+                            selectedBorderWidth = 2.dp,
+                            borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            borderWidth = 1.dp
+                        ),
                         enabled = isSel || selectedRoomPurposes.size < 2
                     )
                 }
