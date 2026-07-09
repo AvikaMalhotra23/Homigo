@@ -150,14 +150,35 @@ function calculateCompatibility(a, b) {
     console.error("Error calculating deal breaker penalty:", e);
   }
 
-  const overall = Math.max(0, Math.round(
+  // G. Language Compatibility bonus
+  let languageBonus = 0;
+  try {
+    const aLangs = JSON.parse(a.languages || '[]');
+    const bLangs = JSON.parse(b.languages || '[]');
+
+    if (aLangs.length > 0 && bLangs.length > 0) {
+      if (aLangs[0] === bLangs[0]) {
+        languageBonus = 10; // Same primary language
+      } else {
+        const commonLangs = aLangs.filter(lang => bLangs.includes(lang));
+        if (commonLangs.length > 0) {
+          languageBonus = 5; // At least one common language
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Error calculating language bonus:", e);
+  }
+
+  const overall = Math.min(100, Math.max(0, Math.round(
     budgetScore * 0.2 +
     sleepScore * 0.2 +
     lifestyleScore * 0.2 +
     cleanScore * 0.2 +
     socialScore * 0.2 -
-    dealBreakerPenalty
-  ));
+    dealBreakerPenalty +
+    languageBonus
+  )));
 
   return {
     overall,
@@ -165,6 +186,7 @@ function calculateCompatibility(a, b) {
     sleep: sleepScore,
     lifestyle: lifestyleScore,
     cleanliness: cleanScore,
-    social: socialScore
+    social: socialScore,
+    languageBonus: languageBonus
   };
 }

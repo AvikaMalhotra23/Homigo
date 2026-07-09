@@ -169,7 +169,8 @@ private val indiaStates = listOf(
     "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
     "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
     "Uttar Pradesh", "Uttarakhand", "West Bengal",
-    "Delhi", "Jammu and Kashmir", "Ladakh", "Puducherry"
+    "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi (National Capital Territory)", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
 )
 
 
@@ -2425,6 +2426,7 @@ private fun StepInterestsSelection(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StepBudgetAndBio(
     selectedLanguages: Set<String>, onLanguagesChanged: (Set<String>) -> Unit,
@@ -2433,8 +2435,18 @@ private fun StepBudgetAndBio(
     bio: String, onBioChanged: (String) -> Unit,
     onNext: () -> Unit
 ) {
-    val languagesList = listOf("English", "Hindi", "Punjabi", "Tamil", "Telugu", "Bengali", "Malayalam", "Gujarati")
     var stateExpanded by remember { mutableStateOf(false) }
+    var langExpanded by remember { mutableStateOf(false) }
+
+    val languagesList = remember {
+        listOf(
+            "English", "Hindi", "Punjabi", "Tamil", "Telugu", "Kannada", "Malayalam", "Marathi",
+            "Gujarati", "Bengali", "Assamese", "Odia", "Urdu", "Sanskrit", "Kashmiri", "Konkani",
+            "Manipuri (Meitei)", "Nepali", "Bodo", "Dogri", "Maithili", "Santali", "Sindhi", "Tulu",
+            "Bhojpuri", "Rajasthani", "Haryanvi", "Garhwali", "Kumaoni", "Chhattisgarhi", "Mizo",
+            "Khasi", "Garo", "Nagamese", "Other"
+        )
+    }
 
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("Background & Bio", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
@@ -2459,17 +2471,109 @@ private fun StepBudgetAndBio(
             }
         }
 
-        Text("Languages Spoken", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-        Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            languagesList.forEach { lang ->
-                val isSel = selectedLanguages.contains(lang)
-                FilterChip(
-                    selected = isSel,
-                    onClick = {
-                        if (isSel) onLanguagesChanged(selectedLanguages - lang) else onLanguagesChanged(selectedLanguages + lang)
-                    },
-                    label = { Text(lang) }
-                )
+        Text("Languages Spoken *", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(onClick = { langExpanded = !langExpanded }, modifier = Modifier.fillMaxWidth()) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (selectedLanguages.isEmpty()) "Select Languages" else "${selectedLanguages.size} Selected",
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1
+                    )
+                    Text("▼")
+                }
+            }
+            DropdownMenu(
+                expanded = langExpanded,
+                onDismissRequest = { langExpanded = false },
+                modifier = Modifier.fillMaxWidth().height(280.dp)
+            ) {
+                languagesList.forEach { lang ->
+                    val isChecked = if (lang == "Other") {
+                        selectedLanguages.any { it.startsWith("Other") }
+                    } else {
+                        selectedLanguages.contains(lang)
+                    }
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                                Checkbox(
+                                    checked = isChecked,
+                                    onCheckedChange = null
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(lang)
+                            }
+                        },
+                        onClick = {
+                            if (lang == "Other") {
+                                val hasOther = selectedLanguages.any { it.startsWith("Other") }
+                                if (hasOther) {
+                                    onLanguagesChanged(selectedLanguages.filter { !it.startsWith("Other") }.toSet())
+                                } else {
+                                    onLanguagesChanged(selectedLanguages + "Other")
+                                }
+                            } else {
+                                if (isChecked) {
+                                    onLanguagesChanged(selectedLanguages - lang)
+                                } else {
+                                    onLanguagesChanged(selectedLanguages + lang)
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+        }
+
+        val hasOtherSelected = selectedLanguages.any { it.startsWith("Other") }
+        if (hasOtherSelected) {
+            var otherTypedText by remember { mutableStateOf("") }
+            LaunchedEffect(selectedLanguages) {
+                val found = selectedLanguages.find { it.startsWith("Other (") }
+                if (found != null) {
+                    otherTypedText = found.substringAfter("Other (").substringBefore(")")
+                }
+            }
+            OutlinedTextField(
+                value = otherTypedText,
+                onValueChange = { newValue ->
+                    otherTypedText = newValue
+                    val baseSet = selectedLanguages.filter { !it.startsWith("Other") }.toSet()
+                    if (newValue.isNotBlank()) {
+                        onLanguagesChanged(baseSet + "Other ($newValue)")
+                    } else {
+                        onLanguagesChanged(baseSet + "Other")
+                    }
+                },
+                label = { Text("Specify Other Language") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        if (selectedLanguages.isNotEmpty()) {
+            Text("Selected Languages:", fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+            @OptIn(ExperimentalLayoutApi::class)
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                selectedLanguages.forEach { lang ->
+                    InputChip(
+                        selected = true,
+                        onClick = { onLanguagesChanged(selectedLanguages - lang) },
+                        label = { Text(lang) },
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Remove",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    )
+                }
             }
         }
 
