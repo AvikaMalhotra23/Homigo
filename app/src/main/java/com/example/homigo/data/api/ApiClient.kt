@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
     // 10.0.2.2 is Android emulator's alias for host machine's localhost
-    private const val BASE_URL = "http://10.0.2.2:5001/api/"
+    private const val BASE_URL = "https://1cc37b2abc5dbe.lhr.life/api/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
