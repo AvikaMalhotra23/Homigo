@@ -889,6 +889,44 @@ private fun StepGenderSelection(gender: String, onGenderChanged: (String) -> Uni
     }
 }
 
+private fun getCollegeAbbreviation(name: String): String {
+    val trimmed = name.trim()
+    return when {
+        trimmed.contains("Lovely Professional University", true) -> "LPU"
+        trimmed.contains("Thapar", true) -> "TIET"
+        trimmed.contains("Delhi University", true) -> "DU"
+        trimmed.contains("BITS Pilani", true) -> "BITS"
+        trimmed.contains("Allahabad", true) -> "IIITA"
+        trimmed.contains("Kurukshetra", true) -> "NITK"
+        trimmed.contains("LNMIIT", true) -> "LNM"
+        trimmed.contains("Vellore Institute of Technology", true) -> "VIT"
+        trimmed.contains("SRM", true) -> "SRM"
+        trimmed.contains("RV College of Engineering", true) -> "RVCE"
+        trimmed.contains("BMS College of Engineering", true) -> "BMSCE"
+        trimmed.contains("Shiv Nadar", true) -> "SNU"
+        trimmed.contains("Amrita Vishwa Vidyapeetham", true) -> "AVV"
+        trimmed.contains("PES University", true) -> "PESU"
+        trimmed.contains("Chaitanya Bharathi", true) -> "CBIT"
+        trimmed.contains("Manipal", true) -> "MAHE"
+        trimmed.contains("Amity", true) -> "AMITY"
+        trimmed.contains("KMIT", true) -> "KMIT"
+        trimmed.contains("MAIT", true) -> "MAIT"
+        trimmed.contains("VESIT", true) -> "VESIT"
+        trimmed.contains("Chandigarh University", true) -> "CU"
+        else -> {
+            val parts = trimmed.split(" ", "-", ",", "[", "]")
+                .filter { it.isNotBlank() && it[0].isLetter() && it.lowercase() != "and" && it.lowercase() != "of" && it.lowercase() != "for" && it.lowercase() != "technology" && it.lowercase() != "science" && it.lowercase() != "institute" && it.lowercase() != "university" && it.lowercase() != "college" }
+            if (parts.isEmpty()) {
+                trimmed.take(2).uppercase()
+            } else if (parts.size == 1) {
+                parts[0].take(3).uppercase()
+            } else {
+                parts.take(3).map { it.take(1) }.joinToString("").uppercase()
+            }
+        }
+    }
+}
+
 @Composable
 fun PremiumCollegeCard(
     collegeName: String,
@@ -978,6 +1016,7 @@ fun PremiumCollegeCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 // University logo / letter avatar
+                val abbreviation = remember(collegeName) { getCollegeAbbreviation(collegeName) }
                 Box(
                     modifier = Modifier
                         .size(48.dp)
@@ -988,9 +1027,9 @@ fun PremiumCollegeCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = initial.toString(),
+                        text = abbreviation,
                         color = Color.White,
-                        fontSize = 20.sp,
+                        fontSize = if (abbreviation.length >= 4) 12.sp else if (abbreviation.length == 3) 14.sp else 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
