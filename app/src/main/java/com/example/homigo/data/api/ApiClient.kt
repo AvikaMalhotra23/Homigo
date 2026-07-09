@@ -7,8 +7,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    // Public SSH tunnel URL allowing anyone on the internet to connect to the backend
-    private const val BASE_URL = "https://7250f2ab23c922.lhr.life/api/"
+    // 10.0.2.2 is Android emulator's alias for host machine's localhost
+    private const val BASE_URL = "http://10.0.2.2:5001/api/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

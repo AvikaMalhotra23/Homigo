@@ -17,7 +17,7 @@ interface ApiService {
     @POST("profile/update")
     suspend fun updateProfile(
         @Header("Authorization") token: String,
-        @Body body: Map<String, Any>
+        @Body body: @JvmSuppressWildcards Map<String, Any>
     ): OkResponse
 
     @POST("profile/verify")
@@ -44,7 +44,7 @@ interface ApiService {
     @POST("requests/respond")
     suspend fun respondToRequest(
         @Header("Authorization") token: String,
-        @Body body: Map<String, Any>
+        @Body body: @JvmSuppressWildcards Map<String, Any>
     ): OkResponse
 
     @GET("chat/list")
@@ -59,13 +59,13 @@ interface ApiService {
     @POST("chat/send")
     suspend fun sendChatMessage(
         @Header("Authorization") token: String,
-        @Body body: Map<String, Any>
+        @Body body: @JvmSuppressWildcards Map<String, Any>
     ): ChatMessage
 
     @POST("expenses/add")
     suspend fun addExpense(
         @Header("Authorization") token: String,
-        @Body body: Map<String, Any>
+        @Body body: @JvmSuppressWildcards Map<String, Any>
     ): OkResponse
 
     @GET("expenses/list")
@@ -83,7 +83,7 @@ interface ApiService {
     @POST("reviews/add")
     suspend fun addReview(
         @Header("Authorization") token: String,
-        @Body body: Map<String, Any>
+        @Body body: @JvmSuppressWildcards Map<String, Any>
     ): OkResponse
 
     @GET("reviews/list/{userId}")
@@ -129,6 +129,6 @@ interface ApiService {
     @POST("marketplace/add")
     suspend fun addMarketplaceItem(
         @Header("Authorization") token: String,
-        @Body body: Map<String, Any>
+        @Body body: @JvmSuppressWildcards Map<String, Any>
     ): OkResponse
 }

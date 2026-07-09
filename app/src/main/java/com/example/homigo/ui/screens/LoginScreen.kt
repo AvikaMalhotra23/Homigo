@@ -93,7 +93,7 @@ fun LoginScreen(
                             onLoginSuccess(res.user.hasProfile)
                         } catch (e: Exception) {
                             isLoading = false
-                            errorMessage = e.message ?: "Authentication failed"
+                            errorMessage = HomigoRepository.getErrorMessage(e)
                         }
                     }
                 },

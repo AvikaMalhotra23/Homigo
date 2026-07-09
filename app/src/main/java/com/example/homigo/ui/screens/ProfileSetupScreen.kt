@@ -374,7 +374,7 @@ fun ProfileSetupScreen(
                                     isGeneratingBio = false
                                 } catch (e: Exception) {
                                     isGeneratingBio = false
-                                    errorMessage = "AI generation failed: ${e.message}"
+                                    errorMessage = "AI generation failed: " + HomigoRepository.getErrorMessage(e)
                                 }
                             }
                         },
@@ -425,7 +425,7 @@ fun ProfileSetupScreen(
                                         successMessage = "Profile verified successfully!"
                                     } catch (e: Exception) {
                                         isUploadingDoc = false
-                                        errorMessage = "Verification failed: ${e.message}"
+                                        errorMessage = "Verification failed: " + HomigoRepository.getErrorMessage(e)
                                     }
                                 }
                             },
@@ -476,7 +476,7 @@ fun ProfileSetupScreen(
                             onSetupComplete()
                         } catch (e: Exception) {
                             isLoading = false
-                            errorMessage = e.message ?: "Failed to save profile"
+                            errorMessage = HomigoRepository.getErrorMessage(e)
                         }
                     }
                 },

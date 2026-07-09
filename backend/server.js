@@ -17,6 +17,29 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
+// Request logging middleware for debugging
+app.use((req, res, next) => {
+  console.log(`\n>>> [REQUEST] ${req.method} ${req.url}`);
+  if (req.body && Object.keys(req.body).length > 0) {
+    // Mask password in logs
+    const bodyCopy = { ...req.body };
+    if (bodyCopy.password) bodyCopy.password = '********';
+    console.log('Body:', JSON.stringify(bodyCopy, null, 2));
+  }
+  
+  const originalJson = res.json;
+  res.json = function(data) {
+    console.log(`<<< [RESPONSE] Status ${res.statusCode}`);
+    if (data && (data.error || data.message || data.token)) {
+      const dataCopy = { ...data };
+      if (dataCopy.token) dataCopy.token = '...masked...';
+      console.log('Data:', JSON.stringify(dataCopy, null, 2));
+    }
+    return originalJson.apply(this, arguments);
+  };
+  next();
+});
+
 // Socket.IO middleware to make 'io' accessible in route controllers
 app.use((req, res, next) => {
   req.io = io;

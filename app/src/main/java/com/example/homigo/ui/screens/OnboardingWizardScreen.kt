@@ -3,21 +3,29 @@ package com.example.homigo.ui.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
@@ -160,7 +168,7 @@ fun OnboardingWizardScreen(
 
     // Keep theme as neutral general blue (male) during steps 1 to 10. Only on step 11 we apply the selected gender's theme!
     val currentThemeGender = if (currentStep < 11) "male" else gender
-    val pastelBackgroundColor = if (currentThemeGender == "female") Color(0xFFFFF5F7) else Color(0xFFF2F8FF)
+    val pastelBackgroundColor = Color(0xFFF8FAFC)
     val cardSelectedColor = Color(0xFFC8E6C9)
 
     HomigoTheme(gender = currentThemeGender) {
@@ -175,6 +183,11 @@ fun OnboardingWizardScreen(
             ) {
                 // Top Progress indicator
                 if (currentStep > 1) {
+                    val animatedProgress by animateFloatAsState(
+                        targetValue = currentStep / 11f,
+                        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+                        label = "progressAnimation"
+                    )
                     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -196,18 +209,18 @@ fun OnboardingWizardScreen(
                                 text = "Step $currentStep of 11",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.primary
+                                color = Color(0xFF2563EB)
                             )
                             Box(modifier = Modifier.size(48.dp)) // Spacer
                         }
                         LinearProgressIndicator(
-                            progress = currentStep / 11f,
+                            progress = animatedProgress,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(RoundedCornerShape(3.dp)),
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp)),
+                            color = Color(0xFF2563EB),
+                            trackColor = Color(0xFF2563EB).copy(alpha = 0.1f)
                         )
                     }
                 }
@@ -300,8 +313,8 @@ fun OnboardingWizardScreen(
                                                     "drinking" to drinkingPref,
                                                     "food_preference" to (if (foodPref == "Vegetarian") "veg" else if (foodPref == "Non Vegetarian") "non_veg" else "any"),
                                                     "cleanliness" to (if (cleanlinessRating > 4) "high" else if (cleanlinessRating > 2) "moderate" else "low"),
-                                                    "pets" to (if (petsPref == "Love Pets") "yes" else "no"),
-                                                    "guests" to (if (guestsPref == "Often") "frequent" else if (guestsPref == "Sometimes") "rare" else "no"),
+                                                    "pets" to (if (petsPref != "no") "yes" else "no"),
+                                                    "guests" to (if (guestsPref == "often") "frequent" else if (guestsPref == "sometimes") "rare" else "no"),
                                                     "bio" to userBio
                                                 )
                                                 HomigoRepository.updateProfile(profilePayload)
@@ -309,7 +322,7 @@ fun OnboardingWizardScreen(
                                                 onOnboardingComplete()
                                             } catch (e: Exception) {
                                                 isLoading = false
-                                                errorMessage = e.message ?: "An error occurred during account registration. Please try again."
+                                                errorMessage = HomigoRepository.getErrorMessage(e)
                                             }
                                         }
                                     }
@@ -453,47 +466,490 @@ private fun StepWelcome(onStart: () -> Unit, onNavigateToLogin: () -> Unit) {
 }
 
 @Composable
-private fun StepGenderSelection(gender: String, onGenderChanged: (String) -> Unit, onNext: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Who are you?", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        Spacer(modifier = Modifier.height(24.dp))
+fun AISparkleIllustration() {
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+    val rotateAngle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(8000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rotate"
+    )
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(100.dp)
+            .graphicsLayer(scaleX = pulseScale, scaleY = pulseScale)
+    ) {
+        // Soft blue glowing background
+        Canvas(modifier = Modifier.size(80.dp)) {
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(Color(0xFF2563EB).copy(alpha = 0.15f), Color.Transparent),
+                    center = Offset(size.width / 2, size.height / 2),
+                    radius = size.width / 2
+                )
+            )
+        }
+
+        // Animated sparks
+        Canvas(modifier = Modifier.size(60.dp).graphicsLayer(rotationZ = rotateAngle)) {
+            val w = size.width
+            val h = size.height
+
+            // Center large sparkle
+            drawSparkle(Offset(w * 0.5f, h * 0.5f), 18f, Color(0xFF2563EB))
+
+            // Secondary sparkle top-right
+            drawSparkle(Offset(w * 0.75f, h * 0.25f), 10f, Color(0xFF3B82F6))
+
+            // Third sparkle bottom-left
+            drawSparkle(Offset(w * 0.22f, h * 0.72f), 8f, Color(0xFF60A5FA))
+        }
+    }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSparkle(center: Offset, size: Float, color: Color) {
+    val path = Path().apply {
+        moveTo(center.x, center.y - size)
+        quadraticBezierTo(center.x, center.y, center.x + size, center.y)
+        quadraticBezierTo(center.x, center.y, center.x, center.y + size)
+        quadraticBezierTo(center.x, center.y, center.x - size, center.y)
+        quadraticBezierTo(center.x, center.y, center.x, center.y - size)
+        close()
+    }
+    drawPath(path = path, color = color)
+}
+
+@Composable
+fun GenderIllustration(isFemale: Boolean, isSelected: Boolean) {
+    val tint = if (isSelected) Color(0xFF2563EB) else Color(0xFF64748B)
+    Canvas(modifier = Modifier.size(40.dp)) {
+        val w = size.width
+        val h = size.height
         
-        PremiumSelectedCard(
+        // Draw head
+        drawCircle(
+            color = tint,
+            radius = w * 0.28f,
+            center = Offset(w * 0.5f, h * 0.35f)
+        )
+        
+        // Draw shoulders/body silhouette
+        val path = Path().apply {
+            moveTo(w * 0.15f, h * 0.95f)
+            quadraticBezierTo(w * 0.15f, h * 0.7f, w * 0.35f, h * 0.7f)
+            lineTo(w * 0.65f, h * 0.7f)
+            quadraticBezierTo(w * 0.85f, h * 0.7f, w * 0.85f, h * 0.95f)
+            close()
+        }
+        drawPath(path = path, color = tint)
+
+        // Draw gender details if needed
+        if (isFemale) {
+            // Draw longer hair silhouette behind head
+            drawArc(
+                color = tint,
+                startAngle = 140f,
+                sweepAngle = 260f,
+                useCenter = true,
+                topLeft = Offset(w * 0.16f, h * 0.08f),
+                size = androidx.compose.ui.geometry.Size(w * 0.68f, h * 0.52f)
+            )
+        } else {
+            // Male collar or hair spike
+            val collarPath = Path().apply {
+                moveTo(w * 0.45f, h * 0.7f)
+                lineTo(w * 0.5f, h * 0.78f)
+                lineTo(w * 0.55f, h * 0.7f)
+                close()
+            }
+            drawPath(path = collarPath, color = Color.White.copy(alpha = 0.8f))
+        }
+    }
+}
+
+@Composable
+fun PremiumGenderSelectionCard(
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.() -> Unit
+) {
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.03f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "genderCardScale"
+    )
+
+    Card(
+        modifier = modifier
+            .graphicsLayer(scaleX = scale, scaleY = scale)
+            .fillMaxWidth()
+            .height(80.dp)
+            .shadow(
+                elevation = if (selected) 4.dp else 1.dp,
+                shape = RoundedCornerShape(24.dp),
+                clip = false
+            )
+            .clickable(
+                onClick = onClick,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple(bounded = true, color = Color(0xFF2563EB).copy(alpha = 0.1f))
+            ),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) Color(0xFFEFF6FF) else Color.White
+        ),
+        border = BorderStroke(
+            width = if (selected) 2.dp else 1.dp,
+            color = if (selected) Color(0xFF2563EB) else Color(0xFFE2E8F0)
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                content()
+            }
+
+            // Small animated checkmark in top-right corner
+            androidx.compose.animation.AnimatedVisibility(
+                visible = selected,
+                enter = scaleIn(animationSpec = spring()) + fadeIn(),
+                exit = scaleOut() + fadeOut(),
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 2.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .background(Color(0xFF2563EB), CircleShape)
+                        .border(1.5.dp, Color.White, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Selected",
+                        tint = Color.White,
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StepGenderSelection(gender: String, onGenderChanged: (String) -> Unit, onNext: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val buttonScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "btnScale"
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        // AI themed graphics/illustration
+        AISparkleIllustration()
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Tell us about yourself",
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B),
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "This helps our AI recommend the most compatible roommates for you.",
+                fontSize = 15.sp,
+                color = Color(0xFF64748B),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Male Selection Card
+        PremiumGenderSelectionCard(
             selected = gender == "male",
-            onClick = { onGenderChanged("male") },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            onClick = { onGenderChanged("male") }
         ) {
-            Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("👦", fontSize = 32.sp)
-                Spacer(modifier = Modifier.width(16.dp))
-                Text("Male Student", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            }
+            GenderIllustration(isFemale = false, isSelected = gender == "male")
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = "Male Student",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (gender == "male") Color(0xFF2563EB) else Color(0xFF1E293B)
+            )
         }
 
-        PremiumSelectedCard(
+        // Female Selection Card
+        PremiumGenderSelectionCard(
             selected = gender == "female",
-            onClick = { onGenderChanged("female") },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            onClick = { onGenderChanged("female") }
         ) {
-            Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("👧", fontSize = 32.sp)
-                Spacer(modifier = Modifier.width(16.dp))
-                Text("Female Student", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            }
+            GenderIllustration(isFemale = true, isSelected = gender == "female")
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = "Female Student",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (gender == "female") Color(0xFF2563EB) else Color(0xFF1E293B)
+            )
         }
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Continue Button
         AnimatedVisibility(
             visible = gender.isNotBlank(),
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
+            enter = slideInVertically { it / 2 } + fadeIn(),
+            exit = slideOutVertically { it / 2 } + fadeOut()
         ) {
-            Button(
-                onClick = onNext,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth().height(52.dp)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .graphicsLayer(scaleX = buttonScale, scaleY = buttonScale)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(Color(0xFF2563EB), Color(0xFF1D4ED8))
+                        )
+                    )
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = rememberRipple(bounded = true, color = Color.White),
+                        onClick = onNext
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Continue",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PremiumCollegeCard(
+    collegeName: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.03f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "collegeCardScale"
+    )
+
+    val city = when {
+        collegeName.contains("Lovely", true) -> "Phagwara, Punjab"
+        collegeName.contains("Thapar", true) -> "Patiala, Punjab"
+        collegeName.contains("VIT", true) -> "Vellore, Tamil Nadu"
+        collegeName.contains("SRM", true) -> "Chennai, Tamil Nadu"
+        collegeName.contains("Delhi University", true) || collegeName.contains("IIT, Delhi", true) || collegeName.contains("IIT Delhi", true) -> "New Delhi"
+        collegeName.contains("IIT Bombay", true) -> "Mumbai, Maharashtra"
+        collegeName.contains("IIT Kanpur", true) -> "Kanpur, Uttar Pradesh"
+        collegeName.contains("Manipal", true) -> "Manipal, Karnataka"
+        collegeName.contains("Chandigarh", true) -> "Mohali, Punjab"
+        collegeName.contains("Amity", true) -> "Noida, Uttar Pradesh"
+        collegeName.contains("Bennett", true) -> "Greater Noida, UP"
+        collegeName.contains("Galgotias", true) -> "Greater Noida, UP"
+        collegeName.contains("KIET", true) -> "Ghaziabad, UP"
+        collegeName.contains("KIIT", true) -> "Bhubaneswar, Odisha"
+        else -> "India"
+    }
+
+    val count = when {
+        collegeName.contains("Lovely", true) -> "35k+ Students"
+        collegeName.contains("Thapar", true) -> "12k+ Students"
+        collegeName.contains("VIT", true) -> "28k+ Students"
+        collegeName.contains("SRM", true) -> "20k+ Students"
+        collegeName.contains("Delhi University", true) -> "50k+ Students"
+        collegeName.contains("IIT Delhi", true) || collegeName.contains("IIT Bombay", true) -> "10k+ Students"
+        collegeName.contains("Chandigarh", true) -> "30k+ Students"
+        else -> "8k+ Students"
+    }
+
+    val initial = collegeName.trim().firstOrNull() ?: 'U'
+    val gradientColors = when (initial) {
+        'L' -> listOf(Color(0xFFEA580C), Color(0xFFF97316))
+        'T' -> listOf(Color(0xFF0284C7), Color(0xFF0EA5E9))
+        'V' -> listOf(Color(0xFF16A34A), Color(0xFF22C55E))
+        'S' -> listOf(Color(0xFFE11D48), Color(0xFFF43F5E))
+        'I' -> listOf(Color(0xFF2563EB), Color(0xFF3B82F6))
+        'D' -> listOf(Color(0xFFDB2777), Color(0xFFEC4899))
+        'M' -> listOf(Color(0xFF0F766E), Color(0xFF14B8A6))
+        'C' -> listOf(Color(0xFFD97706), Color(0xFFF59E0B))
+        else -> listOf(Color(0xFF4F46E5), Color(0xFF6366F1))
+    }
+
+    Card(
+        modifier = modifier
+            .graphicsLayer(scaleX = scale, scaleY = scale)
+            .fillMaxWidth()
+            .shadow(
+                elevation = if (selected) 4.dp else 1.dp,
+                shape = RoundedCornerShape(20.dp),
+                clip = false
+            )
+            .clickable(
+                onClick = onClick,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple(bounded = true, color = Color(0xFF2563EB).copy(alpha = 0.1f))
+            ),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) Color(0xFFEFF6FF) else Color.White
+        ),
+        border = BorderStroke(
+            width = if (selected) 2.dp else 1.dp,
+            color = if (selected) Color(0xFF2563EB) else Color(0xFFE2E8F0)
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // University logo / letter avatar
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            Brush.linearGradient(colors = gradientColors),
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = initial.toString(),
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = collegeName,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E293B),
+                        maxLines = 1
+                    )
+                    
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Location",
+                            tint = Color(0xFF64748B),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = city,
+                            fontSize = 13.sp,
+                            color = Color(0xFF64748B)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Student Count",
+                            tint = Color(0xFF64748B),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = count,
+                            fontSize = 13.sp,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+                }
+            }
+
+            // Small animated checkmark in top-right corner
+            androidx.compose.animation.AnimatedVisibility(
+                visible = selected,
+                enter = scaleIn(animationSpec = spring()) + fadeIn(),
+                exit = scaleOut() + fadeOut(),
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .background(Color(0xFF2563EB), CircleShape)
+                        .border(1.5.dp, Color.White, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Selected",
+                        tint = Color.White,
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
             }
         }
     }
@@ -505,54 +961,276 @@ private fun StepCollegeSelection(selectedCollege: String, onCollegeSelected: (St
     val filteredColleges = remember(searchQuery) {
         if (searchQuery.isBlank()) allColleges else allColleges.filter { it.contains(searchQuery, ignoreCase = true) }
     }
+    var isFocused by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-        Text("Select College", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        Spacer(modifier = Modifier.height(16.dp))
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Select College", 
+                fontSize = 26.sp, 
+                fontWeight = FontWeight.Bold, 
+                color = Color(0xFF1E293B)
+            )
+            Text(
+                text = "We'll recommend roommates from your campus.",
+                fontSize = 15.sp,
+                color = Color(0xFF64748B)
+            )
+        }
 
+        // Improved Premium Search Bar
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Search College...") },
-            leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = "Search") },
+            placeholder = { 
+                Text(
+                    text = "Search your university...", 
+                    color = Color(0xFF94A3B8),
+                    fontSize = 15.sp
+                ) 
+            },
+            leadingIcon = { 
+                Icon(
+                    imageVector = Icons.Default.Search, 
+                    contentDescription = "Search",
+                    tint = if (isFocused) Color(0xFF2563EB) else Color(0xFF94A3B8),
+                    modifier = Modifier.size(20.dp)
+                ) 
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(
+                            imageVector = Icons.Default.Clear, 
+                            contentDescription = "Clear",
+                            tint = Color(0xFF64748B),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                focusedBorderColor = Color(0xFF2563EB),
+                unfocusedBorderColor = Color(0xFFE2E8F0),
+                focusedLabelColor = Color(0xFF2563EB),
+                unfocusedLabelColor = Color(0xFF94A3B8),
+            ),
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation = if (isFocused) 4.dp else 1.dp,
+                    shape = RoundedCornerShape(24.dp),
+                    clip = false
+                )
+                .onFocusChanged { isFocused = it.isFocused }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
+        // Colleges List
         Column(
-            modifier = Modifier.height(300.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier
+                .height(320.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             filteredColleges.forEach { college ->
                 val isSelected = selectedCollege == college
-                PremiumSelectedCard(
+                PremiumCollegeCard(
+                    collegeName = college,
                     selected = isSelected,
                     onClick = { onCollegeSelected(college) },
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(imageVector = Icons.Default.LocationOn, contentDescription = "College", tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(college, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    }
-                }
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
-        AnimatedVisibility(
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Continue Button
+        androidx.compose.animation.AnimatedVisibility(
             visible = selectedCollege.isNotBlank(),
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
+            enter = slideInVertically { it / 2 } + fadeIn(),
+            exit = slideOutVertically { it / 2 } + fadeOut()
         ) {
-            Button(
-                onClick = onNext,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth().height(52.dp)
+            val interactionSource = remember { MutableInteractionSource() }
+            val isPressed by interactionSource.collectIsPressedAsState()
+            val buttonScale by animateFloatAsState(
+                targetValue = if (isPressed) 0.95f else 1.0f,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+                label = "btnScale"
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .graphicsLayer(scaleX = buttonScale, scaleY = buttonScale)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(Color(0xFF2563EB), Color(0xFF1D4ED8))
+                        )
+                    )
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = rememberRipple(bounded = true, color = Color.White),
+                        onClick = onNext
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Continue",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PremiumHostelCard(
+    hostelName: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.03f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "hostelCardScale"
+    )
+
+    val subtitle = when {
+        hostelName.startsWith("BH-") -> "Boys Hostel ${hostelName.substringAfter("BH-")}"
+        hostelName.startsWith("GH-") -> "Girls Hostel ${hostelName.substringAfter("GH-")}"
+        hostelName.contains("Hostel", true) -> "Campus Residence"
+        else -> "Student Housing"
+    }
+
+    Card(
+        modifier = modifier
+            .graphicsLayer(scaleX = scale, scaleY = scale)
+            .fillMaxWidth()
+            .height(100.dp)
+            .shadow(
+                elevation = if (selected) 4.dp else 1.dp,
+                shape = RoundedCornerShape(20.dp),
+                clip = false
+            )
+            .clickable(
+                onClick = onClick,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple(bounded = true, color = Color(0xFF2563EB).copy(alpha = 0.1f))
+            ),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) Color(0xFFEFF6FF) else Color.White
+        ),
+        border = BorderStroke(
+            width = if (selected) 2.dp else 1.dp,
+            color = if (selected) Color(0xFF2563EB) else Color(0xFFE2E8F0)
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Hostel icon container with gradient background
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(
+                            Brush.linearGradient(
+                                colors = if (selected) {
+                                    listOf(Color(0xFF2563EB), Color(0xFF3B82F6))
+                                } else {
+                                    listOf(Color(0xFF64748B), Color(0xFF94A3B8))
+                                }
+                            ),
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Home,
+                        contentDescription = "Hostel Icon",
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text(
+                        text = hostelName,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E293B)
+                    )
+                    Text(
+                        text = subtitle,
+                        fontSize = 13.sp,
+                        color = Color(0xFF64748B)
+                    )
+                }
+            }
+
+            // Small checkmark badge top-right
+            androidx.compose.animation.AnimatedVisibility(
+                visible = selected,
+                enter = scaleIn(animationSpec = spring()) + fadeIn(),
+                exit = scaleOut() + fadeOut(),
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .background(Color(0xFF2563EB), CircleShape)
+                        .border(1.5.dp, Color.White, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Selected",
+                        tint = Color.White,
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
             }
         }
     }
@@ -569,45 +1247,267 @@ private fun StepHostelSelection(selectedCollege: String, gender: String, selecte
         }
     }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-        Text("Select Hostel", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("Showing hostels on campus for ${selectedCollege}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
-        Spacer(modifier = Modifier.height(24.dp))
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Select Hostel", 
+                fontSize = 26.sp, 
+                fontWeight = FontWeight.Bold, 
+                color = Color(0xFF1E293B)
+            )
+            Text(
+                text = "Choose the hostel where you currently live.",
+                fontSize = 15.sp,
+                color = Color(0xFF64748B)
+            )
+        }
 
+        // Hostels Grid
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            modifier = Modifier.height(320.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.height(340.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(hostels) { hostel ->
                 val isSelected = selectedHostel == hostel
-                PremiumSelectedCard(
+                PremiumHostelCard(
+                    hostelName = hostel,
                     selected = isSelected,
                     onClick = { onHostelSelected(hostel) },
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Box(modifier = Modifier.padding(20.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text(hostel, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
-                    }
-                }
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
-        AnimatedVisibility(
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Continue Button
+        androidx.compose.animation.AnimatedVisibility(
             visible = selectedHostel.isNotBlank(),
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
+            enter = slideInVertically { it / 2 } + fadeIn(),
+            exit = slideOutVertically { it / 2 } + fadeOut()
         ) {
-            Button(
-                onClick = onNext,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth().height(52.dp)
+            val interactionSource = remember { MutableInteractionSource() }
+            val isPressed by interactionSource.collectIsPressedAsState()
+            val buttonScale by animateFloatAsState(
+                targetValue = if (isPressed) 0.95f else 1.0f,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+                label = "btnScale"
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .graphicsLayer(scaleX = buttonScale, scaleY = buttonScale)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(Color(0xFF2563EB), Color(0xFF1D4ED8))
+                        )
+                    )
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = rememberRipple(bounded = true, color = Color.White),
+                        onClick = onNext
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Continue",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
+        }
+    }
+}
+
+@Composable
+fun AccountIllustration() {
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.98f,
+        targetValue = 1.02f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(90.dp)
+            .graphicsLayer(scaleX = pulseScale, scaleY = pulseScale)
+    ) {
+        Canvas(modifier = Modifier.size(80.dp)) {
+            // Draw background soft gradient circle
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(Color(0xFF2563EB).copy(alpha = 0.12f), Color.Transparent),
+                    center = Offset(size.width / 2, size.height / 2),
+                    radius = size.width / 2
+                )
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(Color(0xFF2563EB), Color(0xFF3B82F6))
+                    ),
+                    CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = "Account Illustration",
+                tint = Color.White,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+    }
+}
+
+fun getPasswordStrength(password: String): PasswordStrength {
+    if (password.isEmpty()) return PasswordStrength.EMPTY
+    if (password.length < 6) return PasswordStrength.WEAK
+    
+    var hasLetter = false
+    var hasDigit = false
+    var hasSpecial = false
+    
+    for (char in password) {
+        if (char.isLetter()) hasLetter = true
+        else if (char.isDigit()) hasDigit = true
+        else hasSpecial = true
+    }
+    
+    return if (hasLetter && hasDigit && hasSpecial && password.length >= 8) {
+        PasswordStrength.STRONG
+    } else if (hasLetter && hasDigit) {
+        PasswordStrength.MEDIUM
+    } else {
+        PasswordStrength.WEAK
+    }
+}
+
+enum class PasswordStrength(val label: String, val color: Color, val progress: Float) {
+    EMPTY("", Color.Transparent, 0.0f),
+    WEAK("Weak", Color(0xFFEF4444), 0.33f),
+    MEDIUM("Medium", Color(0xFFF59E0B), 0.66f),
+    STRONG("Strong", Color(0xFF10B981), 1.0f)
+}
+
+@Composable
+fun PremiumTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    leadingIcon: @Composable () -> Unit,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label, color = if (isFocused) Color(0xFF2563EB) else Color(0xFF64748B)) },
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
+        singleLine = true,
+        keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
+            focusedBorderColor = Color(0xFF2563EB),
+            unfocusedBorderColor = Color(0xFFE2E8F0),
+            focusedLabelColor = Color(0xFF2563EB),
+            unfocusedLabelColor = Color(0xFF64748B),
+        ),
+        shape = RoundedCornerShape(16.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = if (isFocused) 3.dp else 1.dp,
+                shape = RoundedCornerShape(16.dp),
+                clip = false
+            )
+            .onFocusChanged { isFocused = it.isFocused }
+    )
+}
+
+@Composable
+fun EyeIcon(visible: Boolean, tint: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val width = size.width
+        val height = size.height
+        
+        // Draw the main eye shape outline using paths
+        val eyePath = Path().apply {
+            moveTo(width * 0.1f, height * 0.5f)
+                quadraticBezierTo(width * 0.5f, height * 0.15f, width * 0.9f, height * 0.5f)
+            quadraticBezierTo(width * 0.5f, height * 0.85f, width * 0.1f, height * 0.5f)
+            close()
+        }
+        
+        // Draw outline path
+        drawPath(
+            path = eyePath,
+            color = tint,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                width = 2.dp.toPx(),
+                cap = androidx.compose.ui.graphics.StrokeCap.Round
+            )
+        )
+        
+        // Draw pupil circle
+        drawCircle(
+            color = tint,
+            radius = width * 0.15f,
+            center = Offset(width * 0.5f, height * 0.5f)
+        )
+        
+        // Draw slash if not visible
+        if (!visible) {
+            drawLine(
+                color = tint,
+                start = Offset(width * 0.25f, height * 0.25f),
+                end = Offset(width * 0.75f, height * 0.75f),
+                strokeWidth = 2.dp.toPx(),
+                cap = androidx.compose.ui.graphics.StrokeCap.Round
+            )
         }
     }
 }
@@ -622,59 +1522,180 @@ private fun StepBasicDetails(
     onNext: () -> Unit
 ) {
     var validationError by remember { mutableStateOf<String?>(null) }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text("Basic Details", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        Spacer(modifier = Modifier.height(4.dp))
+    val passwordStrength = remember(password) { getPasswordStrength(password) }
 
-        OutlinedTextField(
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        AccountIllustration()
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Create your account", 
+                fontSize = 26.sp, 
+                fontWeight = FontWeight.Bold, 
+                color = Color(0xFF1E293B)
+            )
+            Text(
+                text = "Just a few details to personalize your experience.",
+                fontSize = 15.sp,
+                color = Color(0xFF64748B),
+                textAlign = TextAlign.Center
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Full Name Field
+        PremiumTextField(
             value = fullName,
             onValueChange = { onNameChanged(it); validationError = null },
-            label = { Text("Full Name") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            label = "Full Name",
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Person, 
+                    contentDescription = null,
+                    tint = Color(0xFF94A3B8),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         )
 
-        OutlinedTextField(
+        // Email Field
+        PremiumTextField(
             value = email,
             onValueChange = { onEmailChanged(it); validationError = null },
-            label = { Text("Email Address") },
-            singleLine = true,
+            label = "Email Address",
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth()
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Email, 
+                    contentDescription = null,
+                    tint = Color(0xFF94A3B8),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         )
 
-        OutlinedTextField(
+        // Phone Field
+        PremiumTextField(
             value = phone,
             onValueChange = { onPhoneChanged(it); validationError = null },
-            label = { Text("Phone Number") },
-            singleLine = true,
+            label = "Phone Number",
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-            modifier = Modifier.fillMaxWidth()
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Phone, 
+                    contentDescription = null,
+                    tint = Color(0xFF94A3B8),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         )
 
-        OutlinedTextField(
-            value = password,
-            onValueChange = { onPasswordChanged(it); validationError = null },
-            label = { Text("Password") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth()
-        )
+        // Password Field
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            PremiumTextField(
+                value = password,
+                onValueChange = { onPasswordChanged(it); validationError = null },
+                label = "Password",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Lock, 
+                        contentDescription = null,
+                        tint = Color(0xFF94A3B8),
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        EyeIcon(
+                            visible = passwordVisible, 
+                            tint = Color(0xFF64748B),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            )
 
-        OutlinedTextField(
+            // Password strength indicator
+            if (password.isNotEmpty()) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                ) {
+                    LinearProgressIndicator(
+                        progress = { passwordStrength.progress },
+                        color = passwordStrength.color,
+                        trackColor = Color(0xFFE2E8F0),
+                        strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                    )
+                    Text(
+                        text = passwordStrength.label,
+                        color = passwordStrength.color,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        // Confirm Password Field
+        PremiumTextField(
             value = confirmPassword,
             onValueChange = { onConfirmChanged(it); validationError = null },
-            label = { Text("Confirm Password") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
+            label = "Confirm Password",
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth()
+            visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Lock, 
+                    contentDescription = null,
+                    tint = Color(0xFF94A3B8),
+                    modifier = Modifier.size(20.dp)
+                )
+            },
+            trailingIcon = {
+                IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                    EyeIcon(
+                        visible = confirmPasswordVisible, 
+                        tint = Color(0xFF64748B),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
         )
 
         if (validationError != null) {
-            Text(validationError!!, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
+            Text(
+                text = validationError!!, 
+                color = MaterialTheme.colorScheme.error, 
+                fontSize = 13.sp,
+                modifier = Modifier.padding(horizontal = 4.dp)
+            )
         }
 
         val isFormValid = fullName.isNotBlank() &&
@@ -684,17 +1705,57 @@ private fun StepBasicDetails(
                 confirmPassword == password
 
         Spacer(modifier = Modifier.height(16.dp))
-        AnimatedVisibility(
+
+        // Continue Button
+        androidx.compose.animation.AnimatedVisibility(
             visible = isFormValid,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
+            enter = slideInVertically { it / 2 } + fadeIn(),
+            exit = slideOutVertically { it / 2 } + fadeOut()
         ) {
-            Button(
-                onClick = onNext,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth().height(52.dp)
+            val interactionSource = remember { MutableInteractionSource() }
+            val isPressed by interactionSource.collectIsPressedAsState()
+            val buttonScale by animateFloatAsState(
+                targetValue = if (isPressed) 0.95f else 1.0f,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+                label = "btnScale"
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .graphicsLayer(scaleX = buttonScale, scaleY = buttonScale)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(Color(0xFF2563EB), Color(0xFF1D4ED8))
+                        )
+                    )
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = rememberRipple(bounded = true, color = Color.White),
+                        onClick = onNext
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Continue",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }

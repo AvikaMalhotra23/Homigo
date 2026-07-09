@@ -166,7 +166,7 @@ fun RegisterScreen(
                                     onRegisterSuccess(selectedCollegeName, course)
                                 } catch (e: Exception) {
                                     isLoading = false
-                                    errorMessage = e.message ?: "Registration failed"
+                                    errorMessage = HomigoRepository.getErrorMessage(e)
                                 }
                             }
                         },

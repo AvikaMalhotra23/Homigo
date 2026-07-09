@@ -169,4 +169,17 @@ object HomigoRepository {
         val authToken = _token.value ?: throw Exception("Not authenticated")
         return api.detectFake(authToken, userId)
     }
+
+    fun getErrorMessage(e: Throwable): String {
+        return if (e is retrofit2.HttpException) {
+            try {
+                val errorBody = e.response()?.errorBody()?.string()
+                org.json.JSONObject(errorBody ?: "").getString("error")
+            } catch (ex: Exception) {
+                e.message() ?: "HTTP error occurred"
+            }
+        } else {
+            e.message ?: "An unexpected error occurred"
+        }
+    }
 }
