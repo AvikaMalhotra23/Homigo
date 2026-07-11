@@ -250,9 +250,9 @@ fun OnboardingWizardScreen(
         }
     }
 
-    // Keep theme as neutral general blue (male) during steps 1 to 10. Only on step 11 we apply the selected gender's theme!
-    val currentThemeGender = if (currentStep < 11) "male" else gender
-    val pastelBackgroundColor = Color(0xFFF8FAFC)
+    // Keep theme as neutral general blue (male) during steps 1 to 10 (except step 1 which is our landing page where the user can toggle editions!). Only on step 11 we apply the selected gender's theme!
+    val currentThemeGender = if (currentStep == 1) gender else if (currentStep < 11) "male" else gender
+    val pastelBackgroundColor = if (currentStep == 1) Color.White else Color(0xFFF8FAFC)
     val cardSelectedColor = Color(0xFFC8E6C9)
 
     HomigoTheme(gender = currentThemeGender) {
@@ -263,7 +263,7 @@ fun OnboardingWizardScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp)
+                    .padding(if (currentStep == 1) 0.dp else 24.dp)
             ) {
                 // Top Progress indicator
                 if (currentStep > 1) {
@@ -335,7 +335,12 @@ fun OnboardingWizardScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             when (targetStep) {
-                                1 -> StepWelcome(onStart = { currentStep = 2 }, onNavigateToLogin = onNavigateToLogin)
+                                1 -> StepWelcome(
+                                    gender = gender,
+                                    onGenderChanged = { gender = it },
+                                    onStart = { currentStep = 2 },
+                                    onNavigateToLogin = onNavigateToLogin
+                                )
                                 2 -> StepGenderSelection(gender = gender, onGenderChanged = { gender = it }, onNext = { currentStep = 3 })
                                 3 -> StepCollegeSelection(selectedCollege = selectedCollege, onCollegeSelected = { selectedCollege = it }, onNext = { currentStep = 4 })
                                 4 -> StepHostelSelection(selectedCollege = selectedCollege, gender = gender, selectedHostel = selectedHostel, onHostelSelected = { selectedHostel = it }, onNext = {
@@ -530,47 +535,784 @@ fun PremiumSelectedCard(
 }
 
 @Composable
-private fun StepWelcome(onStart: () -> Unit, onNavigateToLogin: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+fun HomigoPremiumLogo(modifier: Modifier = Modifier, gender: String) {
+    val brandColor = if (gender == "female") Color(0xFFEC4899) else Color(0xFF2563EB)
+    val accentColor = if (gender == "female") Color(0xFFF472B6) else Color(0xFF60A5FA)
+    
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+        modifier = modifier
     ) {
-        Icon(
-            imageVector = Icons.Default.Home,
-            contentDescription = "Homigo Logo",
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(100.dp)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "Welcome to Homigo 👋",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Black,
-            color = MaterialTheme.colorScheme.primary,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "Find your perfect roommate &\nmake hostel life easier.",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(48.dp))
-        Button(
-            onClick = onStart,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().height(52.dp)
-        ) {
-            Text("Get Started", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Canvas(modifier = Modifier.size(42.dp)) {
+            val w = size.width
+            val h = size.height
+            
+            // Left pillar
+            drawRoundRect(
+                color = brandColor,
+                topLeft = Offset(w * 0.15f, h * 0.15f),
+                size = androidx.compose.ui.geometry.Size(w * 0.2f, h * 0.7f),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(6.dp.toPx())
+            )
+            // Right pillar
+            drawRoundRect(
+                color = brandColor,
+                topLeft = Offset(w * 0.65f, h * 0.15f),
+                size = androidx.compose.ui.geometry.Size(w * 0.2f, h * 0.7f),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(6.dp.toPx())
+            )
+            // Center bridge
+            val path = Path().apply {
+                moveTo(w * 0.35f, h * 0.45f)
+                lineTo(w * 0.65f, h * 0.45f)
+                lineTo(w * 0.65f, h * 0.58f)
+                lineTo(w * 0.35f, h * 0.58f)
+                close()
+            }
+            drawPath(path = path, color = accentColor)
+            
+            // Dot indicator
+            drawCircle(
+                color = brandColor,
+                radius = 4.dp.toPx(),
+                center = Offset(w * 0.5f, h * 0.3f)
+            )
         }
-        Spacer(modifier = Modifier.height(24.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Already have an account? ")
-            TextButton(onClick = onNavigateToLogin) {
-                Text("Log In", fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "homigo",
+            fontWeight = FontWeight.Black,
+            fontSize = 28.sp,
+            color = Color(0xFF1E293B)
+        )
+    }
+}
+
+private fun strokeStyle(width: Float = 4f) = androidx.compose.ui.graphics.drawscope.Stroke(
+    width = width,
+    cap = androidx.compose.ui.graphics.StrokeCap.Round
+)
+
+@Composable
+fun MaleWelcomeIllustration(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "walk")
+    val walkOffset by infiniteTransition.animateFloat(
+        initialValue = -3f,
+        targetValue = 3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "walkOffset"
+    )
+
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+
+        // Hostel Building Outline
+        val bgPath = Path().apply {
+            moveTo(w * 0.1f, h * 0.8f)
+            lineTo(w * 0.1f, h * 0.3f)
+            lineTo(w * 0.4f, h * 0.25f)
+            lineTo(w * 0.4f, h * 0.8f)
+            close()
+        }
+        drawPath(path = bgPath, color = Color(0xFFF1F5F9))
+
+        for (row in 0..2) {
+            for (col in 0..1) {
+                drawRoundRect(
+                    color = Color(0xFFE2E8F0),
+                    topLeft = Offset(w * 0.15f + col * w * 0.12f, h * 0.35f + row * h * 0.12f),
+                    size = androidx.compose.ui.geometry.Size(w * 0.07f, h * 0.08f),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
+                )
+            }
+        }
+
+        drawCircle(
+            color = Color(0xFFEFF6FF),
+            radius = w * 0.15f,
+            center = Offset(w * 0.8f, h * 0.5f)
+        )
+
+        drawLine(
+            color = Color(0xFFE2E8F0),
+            start = Offset(0f, h * 0.8f),
+            end = Offset(w, h * 0.8f),
+            strokeWidth = 3.dp.toPx()
+        )
+
+        // Boy 1 (Left)
+        val x1 = w * 0.35f + walkOffset.dp.toPx()
+        val y1 = h * 0.4f
+
+        drawRoundRect(
+            color = Color(0xFF3B82F6),
+            topLeft = Offset(x1 - w * 0.08f, y1 + h * 0.08f),
+            size = androidx.compose.ui.geometry.Size(w * 0.06f, h * 0.15f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(6.dp.toPx())
+        )
+
+        drawLine(
+            color = Color(0xFF1E293B),
+            start = Offset(x1 - w * 0.02f, y1 + h * 0.28f),
+            end = Offset(x1 - w * 0.05f, h * 0.8f),
+            strokeWidth = 5.dp.toPx(),
+            cap = androidx.compose.ui.graphics.StrokeCap.Round
+        )
+        drawLine(
+            color = Color(0xFF1E293B),
+            start = Offset(x1 + w * 0.02f, y1 + h * 0.28f),
+            end = Offset(x1 + w * 0.03f, h * 0.8f),
+            strokeWidth = 5.dp.toPx(),
+            cap = androidx.compose.ui.graphics.StrokeCap.Round
+        )
+
+        val jacketBrush = Brush.linearGradient(
+            colors = listOf(Color(0xFF2563EB), Color(0xFF60A5FA)),
+            start = Offset(x1 - w * 0.06f, y1 + h * 0.05f),
+            end = Offset(x1 + w * 0.06f, y1 + h * 0.28f)
+        )
+        drawRoundRect(
+            brush = jacketBrush,
+            topLeft = Offset(x1 - w * 0.06f, y1 + h * 0.05f),
+            size = androidx.compose.ui.geometry.Size(w * 0.12f, h * 0.23f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(10.dp.toPx())
+        )
+
+        drawCircle(
+            color = Color(0xFFFDBA74),
+            radius = w * 0.05f,
+            center = Offset(x1, y1)
+        )
+
+        val hairPath1 = Path().apply {
+            moveTo(x1 - w * 0.05f, y1 - h * 0.02f)
+            lineTo(x1 + w * 0.05f, y1 - h * 0.02f)
+            lineTo(x1 + w * 0.03f, y1 - h * 0.06f)
+            lineTo(x1, y1 - h * 0.04f)
+            lineTo(x1 - w * 0.03f, y1 - h * 0.06f)
+            close()
+        }
+        drawPath(path = hairPath1, color = Color(0xFF1E293B))
+
+        drawCircle(color = Color(0xFF1E293B), radius = 2f, center = Offset(x1 + w * 0.02f, y1 - h * 0.005f))
+        drawArc(
+            color = Color(0xFF1E293B),
+            startAngle = 0f,
+            sweepAngle = 180f,
+            useCenter = false,
+            topLeft = Offset(x1 + w * 0.015f, y1 + h * 0.01f),
+            size = androidx.compose.ui.geometry.Size(w * 0.02f, h * 0.015f),
+            style = strokeStyle()
+        )
+
+        // Boy 2 (Right)
+        val x2 = w * 0.58f - walkOffset.dp.toPx()
+        val y2 = h * 0.38f
+
+        drawRoundRect(
+            color = Color(0xFF475569),
+            topLeft = Offset(x2 - w * 0.08f, y2 + h * 0.08f),
+            size = androidx.compose.ui.geometry.Size(w * 0.06f, h * 0.15f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(6.dp.toPx())
+        )
+
+        drawLine(
+            color = Color(0xFF1E293B),
+            start = Offset(x2 - w * 0.02f, y2 + h * 0.28f),
+            end = Offset(x2 - w * 0.01f, h * 0.8f),
+            strokeWidth = 5.dp.toPx(),
+            cap = androidx.compose.ui.graphics.StrokeCap.Round
+        )
+        drawLine(
+            color = Color(0xFF1E293B),
+            start = Offset(x2 + w * 0.02f, y2 + h * 0.28f),
+            end = Offset(x2 + w * 0.04f, h * 0.8f),
+            strokeWidth = 5.dp.toPx(),
+            cap = androidx.compose.ui.graphics.StrokeCap.Round
+        )
+
+        val jacketBrush2 = Brush.linearGradient(
+            colors = listOf(Color(0xFF0284C7), Color(0xFF38BDF8)),
+            start = Offset(x2 - w * 0.06f, y2 + h * 0.05f),
+            end = Offset(x2 + w * 0.06f, y2 + h * 0.28f)
+        )
+        drawRoundRect(
+            brush = jacketBrush2,
+            topLeft = Offset(x2 - w * 0.06f, y2 + h * 0.05f),
+            size = androidx.compose.ui.geometry.Size(w * 0.12f, h * 0.23f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(10.dp.toPx())
+        )
+
+        drawCircle(
+            color = Color(0xFFFED7AA),
+            radius = w * 0.05f,
+            center = Offset(x2, y2)
+        )
+
+        val hairPath2 = Path().apply {
+            moveTo(x2 - w * 0.05f, y2 - h * 0.02f)
+            lineTo(x2 + w * 0.05f, y2 - h * 0.02f)
+            lineTo(x2 + w * 0.02f, y2 - h * 0.07f)
+            lineTo(x2 - w * 0.02f, y2 - h * 0.06f)
+            close()
+        }
+        drawPath(path = hairPath2, color = Color(0xFF451A03))
+
+        drawCircle(color = Color(0xFF1E293B), radius = 2f, center = Offset(x2 - w * 0.02f, y2 - h * 0.005f))
+        drawArc(
+            color = Color(0xFF1E293B),
+            startAngle = 0f,
+            sweepAngle = 180f,
+            useCenter = false,
+            topLeft = Offset(x2 - w * 0.035f, y2 + h * 0.01f),
+            size = androidx.compose.ui.geometry.Size(w * 0.02f, h * 0.015f),
+            style = strokeStyle()
+        )
+
+        // Suitcase
+        val suitcaseX = x2 + w * 0.08f
+        val suitcaseY = h * 0.62f
+        drawRoundRect(
+            color = Color(0xFF475569),
+            topLeft = Offset(suitcaseX, suitcaseY),
+            size = androidx.compose.ui.geometry.Size(w * 0.09f, h * 0.15f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+        )
+        drawArc(
+            color = Color(0xFF1E293B),
+            startAngle = 180f,
+            sweepAngle = 180f,
+            useCenter = false,
+            topLeft = Offset(suitcaseX + w * 0.02f, suitcaseY - h * 0.02f),
+            size = androidx.compose.ui.geometry.Size(w * 0.05f, h * 0.04f),
+            style = strokeStyle(width = 2.dp.toPx())
+        )
+        drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcaseX + w * 0.02f, suitcaseY + h * 0.15f))
+        drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcaseX + w * 0.07f, suitcaseY + h * 0.15f))
+    }
+}
+
+@Composable
+fun FemaleWelcomeIllustration(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "walk")
+    val walkOffset by infiniteTransition.animateFloat(
+        initialValue = -3f,
+        targetValue = 3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "walkOffset"
+    )
+
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+
+        // Campus Building Outline
+        val bgPath = Path().apply {
+            moveTo(w * 0.1f, h * 0.8f)
+            lineTo(w * 0.1f, h * 0.35f)
+            lineTo(w * 0.45f, h * 0.28f)
+            lineTo(w * 0.45f, h * 0.8f)
+            close()
+        }
+        drawPath(path = bgPath, color = Color(0xFFFFF5F7))
+
+        for (row in 0..2) {
+            for (col in 0..1) {
+                drawRoundRect(
+                    color = Color(0xFFFFE4E6),
+                    topLeft = Offset(w * 0.16f + col * w * 0.13f, h * 0.38f + row * h * 0.11f),
+                    size = androidx.compose.ui.geometry.Size(w * 0.07f, h * 0.08f),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
+                )
+            }
+        }
+
+        drawCircle(
+            color = Color(0xFFFFF1F2),
+            radius = w * 0.16f,
+            center = Offset(w * 0.8f, h * 0.48f)
+        )
+
+        drawLine(
+            color = Color(0xFFF1F5F9),
+            start = Offset(0f, h * 0.8f),
+            end = Offset(w, h * 0.8f),
+            strokeWidth = 3.dp.toPx()
+        )
+
+        // Girl 1 (Left)
+        val x1 = w * 0.35f + walkOffset.dp.toPx()
+        val y1 = h * 0.4f
+
+        drawRoundRect(
+            color = Color(0xFFF472B6),
+            topLeft = Offset(x1 - w * 0.07f, y1 + h * 0.08f),
+            size = androidx.compose.ui.geometry.Size(w * 0.05f, h * 0.14f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(6.dp.toPx())
+        )
+
+        drawLine(
+            color = Color(0xFF1E293B),
+            start = Offset(x1 - w * 0.02f, y1 + h * 0.28f),
+            end = Offset(x1 - w * 0.04f, h * 0.8f),
+            strokeWidth = 4.5.dp.toPx(),
+            cap = androidx.compose.ui.graphics.StrokeCap.Round
+        )
+        drawLine(
+            color = Color(0xFF1E293B),
+            start = Offset(x1 + w * 0.02f, y1 + h * 0.28f),
+            end = Offset(x1 + w * 0.03f, h * 0.8f),
+            strokeWidth = 4.5.dp.toPx(),
+            cap = androidx.compose.ui.graphics.StrokeCap.Round
+        )
+
+        val bodyBrush = Brush.linearGradient(
+            colors = listOf(Color(0xFFDB2777), Color(0xFFF472B6)),
+            start = Offset(x1 - w * 0.055f, y1 + h * 0.05f),
+            end = Offset(x1 + w * 0.055f, y1 + h * 0.28f)
+        )
+        drawRoundRect(
+            brush = bodyBrush,
+            topLeft = Offset(x1 - w * 0.055f, y1 + h * 0.05f),
+            size = androidx.compose.ui.geometry.Size(w * 0.11f, h * 0.23f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(12.dp.toPx())
+        )
+
+        drawRoundRect(
+            color = Color(0xFFFB7185),
+            topLeft = Offset(x1 + w * 0.01f, y1 + h * 0.11f),
+            size = androidx.compose.ui.geometry.Size(w * 0.07f, h * 0.05f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
+        )
+        drawRoundRect(
+            color = Color(0xFFFDA4AF),
+            topLeft = Offset(x1 + w * 0.015f, y1 + h * 0.09f),
+            size = androidx.compose.ui.geometry.Size(w * 0.06f, h * 0.04f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
+        )
+
+        drawCircle(
+            color = Color(0xFFFDBA74),
+            radius = w * 0.048f,
+            center = Offset(x1, y1)
+        )
+
+        val hairPath1 = Path().apply {
+            moveTo(x1 - w * 0.055f, y1 + h * 0.08f)
+            quadraticBezierTo(x1 - w * 0.06f, y1 - h * 0.03f, x1, y1 - h * 0.06f)
+            quadraticBezierTo(x1 + w * 0.06f, y1 - h * 0.03f, x1 + w * 0.055f, y1 + h * 0.08f)
+            lineTo(x1 + w * 0.045f, y1 + h * 0.12f)
+            lineTo(x1 - w * 0.045f, y1 + h * 0.12f)
+            close()
+        }
+        drawPath(path = hairPath1, color = Color(0xFF3730A3))
+
+        drawCircle(color = Color(0xFF1E293B), radius = 2f, center = Offset(x1 + w * 0.02f, y1 - h * 0.005f))
+        drawArc(
+            color = Color(0xFF1E293B),
+            startAngle = 0f,
+            sweepAngle = 180f,
+            useCenter = false,
+            topLeft = Offset(x1 + w * 0.015f, y1 + h * 0.008f),
+            size = androidx.compose.ui.geometry.Size(w * 0.02f, h * 0.014f),
+            style = strokeStyle(width = 1.8f.dp.toPx())
+        )
+
+        // Girl 2 (Right)
+        val x2 = w * 0.58f - walkOffset.dp.toPx()
+        val y2 = h * 0.38f
+
+        drawLine(
+            color = Color(0xFF1E293B),
+            start = Offset(x2 - w * 0.02f, y2 + h * 0.28f),
+            end = Offset(x2 - w * 0.02f, h * 0.8f),
+            strokeWidth = 4.5.dp.toPx(),
+            cap = androidx.compose.ui.graphics.StrokeCap.Round
+        )
+        drawLine(
+            color = Color(0xFF1E293B),
+            start = Offset(x2 + w * 0.02f, y2 + h * 0.28f),
+            end = Offset(x2 + w * 0.03f, h * 0.8f),
+            strokeWidth = 4.5.dp.toPx(),
+            cap = androidx.compose.ui.graphics.StrokeCap.Round
+        )
+
+        val bodyBrush2 = Brush.linearGradient(
+            colors = listOf(Color(0xFFBE185D), Color(0xFFF472B6)),
+            start = Offset(x2 - w * 0.055f, y2 + h * 0.05f),
+            end = Offset(x2 + w * 0.055f, y2 + h * 0.28f)
+        )
+        drawRoundRect(
+            brush = bodyBrush2,
+            topLeft = Offset(x2 - w * 0.055f, y2 + h * 0.05f),
+            size = androidx.compose.ui.geometry.Size(w * 0.11f, h * 0.23f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(12.dp.toPx())
+        )
+
+        drawCircle(
+            color = Color(0xFFFECACA),
+            radius = w * 0.048f,
+            center = Offset(x2, y2)
+        )
+
+        drawCircle(
+            color = Color(0xFF78350F),
+            radius = w * 0.055f,
+            center = Offset(x2, y2 - h * 0.01f)
+        )
+        val ponytailPath = Path().apply {
+            moveTo(x2 - w * 0.05f, y2)
+            quadraticBezierTo(x2 - w * 0.09f, y2 + h * 0.08f, x2 - w * 0.07f, y2 + h * 0.14f)
+            quadraticBezierTo(x2 - w * 0.04f, y2 + h * 0.08f, x2 - w * 0.03f, y2)
+            close()
+        }
+        drawPath(path = ponytailPath, color = Color(0xFF78350F))
+
+        drawCircle(color = Color(0xFF1E293B), radius = 2f, center = Offset(x2 - w * 0.02f, y2 - h * 0.005f))
+        drawArc(
+            color = Color(0xFF1E293B),
+            startAngle = 0f,
+            sweepAngle = 180f,
+            useCenter = false,
+            topLeft = Offset(x2 - w * 0.035f, y2 + h * 0.008f),
+            size = androidx.compose.ui.geometry.Size(w * 0.02f, h * 0.014f),
+            style = strokeStyle(width = 1.8f.dp.toPx())
+        )
+
+        // Suitcase
+        val suitcaseX = x2 + w * 0.07f
+        val suitcaseY = h * 0.62f
+        drawRoundRect(
+            color = Color(0xFF9333EA),
+            topLeft = Offset(suitcaseX, suitcaseY),
+            size = androidx.compose.ui.geometry.Size(w * 0.09f, h * 0.15f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+        )
+        drawArc(
+            color = Color(0xFF1E293B),
+            startAngle = 180f,
+            sweepAngle = 180f,
+            useCenter = false,
+            topLeft = Offset(suitcaseX + w * 0.02f, suitcaseY - h * 0.02f),
+            size = androidx.compose.ui.geometry.Size(w * 0.05f, h * 0.04f),
+            style = strokeStyle(width = 2.dp.toPx())
+        )
+        drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcaseX + w * 0.02f, suitcaseY + h * 0.15f))
+        drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcaseX + w * 0.07f, suitcaseY + h * 0.15f))
+    }
+}
+
+@Composable
+private fun StepWelcome(
+    gender: String,
+    onGenderChanged: (String) -> Unit,
+    onStart: () -> Unit,
+    onNavigateToLogin: () -> Unit
+) {
+    val greetingText = remember {
+        val calendar = Calendar.getInstance()
+        when (calendar.get(Calendar.HOUR_OF_DAY)) {
+            in 5..11 -> "🌅 Good Morning! Ready to find your ideal roommate?"
+            in 12..16 -> "☀️ Good Afternoon! Your hostel journey starts here."
+            else -> "🌇 Good Evening! Let's help you find the right roommate."
+        }
+    }
+
+    val gradientColor = if (gender == "female") Color(0xFFFFF8FB) else Color(0xFFF5FBFF)
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(gradientColor, Color.White, Color.White),
+                    startY = 0f,
+                    endY = 1200f
+                )
+            )
+            .padding(vertical = 32.dp, horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        // Logo & Gender Selector Header
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            HomigoPremiumLogo(gender = gender)
+            
+            // Capsule badge
+            Row(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(if (gender == "female") Color(0xFFFFF1F2) else Color(0xFFEFF6FF))
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Verified",
+                    tint = if (gender == "female") Color(0xFFEC4899) else Color(0xFF2563EB),
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Trusted by Students",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (gender == "female") Color(0xFFBE185D) else Color(0xFF1D4ED8)
+                )
+            }
+            
+            // Gender switcher capsule
+            Row(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(Color(0xFFF1F5F9))
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                listOf("male", "female").forEach { mode ->
+                    val isSelected = gender == mode
+                    val text = if (mode == "male") "Male Student" else "Female Student"
+                    val activeBgColor = if (mode == "female") Color(0xFFFFF1F2) else Color(0xFFEFF6FF)
+                    val activeTextColor = if (mode == "female") Color(0xFFBE185D) else Color(0xFF1D4ED8)
+                    
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(if (isSelected) activeBgColor else Color.Transparent)
+                            .clickable { onGenderChanged(mode) }
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = text,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (isSelected) activeTextColor else Color(0xFF64748B)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Hero Illustration Section
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(260.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            androidx.compose.animation.AnimatedContent(
+                targetState = gender,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(500)) togetherWith fadeOut(animationSpec = tween(500))
+                },
+                label = "illustrationTransition"
+            ) { targetGender ->
+                if (targetGender == "female") {
+                    FemaleWelcomeIllustration(modifier = Modifier.fillMaxSize())
+                } else {
+                    MaleWelcomeIllustration(modifier = Modifier.fillMaxSize())
+                }
+            }
+        }
+
+        // Heading & Greeting
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = greetingText,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (gender == "female") Color(0xFFDB2777) else Color(0xFF2563EB),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            
+            Text(
+                text = "Find Your Perfect Roommate",
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Black,
+                color = Color(0xFF1E293B),
+                textAlign = TextAlign.Center
+            )
+            
+            Text(
+                text = "Connect with verified students from your university, discover compatible roommates, and start your hostel journey with confidence.",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color(0xFF64748B),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
+
+        // 3 Feature Chips
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            listOf(
+                "Verified Students" to Icons.Default.Check,
+                "Smart Matching" to Icons.Default.Star,
+                "Secure Community" to Icons.Default.Lock
+            ).forEach { (label, icon) ->
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (gender == "female") Color(0xFFFFE4E6) else Color(0xFFDBEAFE))
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (gender == "female") Color(0xFFDB2777) else Color(0xFF2563EB),
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = label,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (gender == "female") Color(0xFF9D174D) else Color(0xFF1E40AF)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Get Started Button
+        val buttonInteractionSource = remember { MutableInteractionSource() }
+        val isPressed by buttonInteractionSource.collectIsPressedAsState()
+        val buttonScale by animateFloatAsState(
+            targetValue = if (isPressed) 0.95f else 1.0f,
+            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+            label = "btnScale"
+        )
+        val buttonGradientColors = if (gender == "female") {
+            listOf(Color(0xFFEC4899), Color(0xFFF472B6))
+        } else {
+            listOf(Color(0xFF2563EB), Color(0xFF60A5FA))
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.75f)
+                .height(56.dp)
+                .graphicsLayer(scaleX = buttonScale, scaleY = buttonScale)
+                .clip(RoundedCornerShape(28.dp))
+                .background(Brush.horizontalGradient(buttonGradientColors))
+                .clickable(
+                    interactionSource = buttonInteractionSource,
+                    indication = rememberRipple(bounded = true, color = Color.White),
+                    onClick = onStart
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Get Started",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        // Secondary Action: Log In
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Already have an account? ",
+                fontSize = 14.sp,
+                color = Color(0xFF64748B)
+            )
+            TextButton(
+                onClick = onNavigateToLogin,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = if (gender == "female") Color(0xFFEC4899) else Color(0xFF2563EB)
+                )
+            ) {
+                Text(
+                    text = "Log In",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+            }
+        }
+
+        // Divider & Trust Section
+        HorizontalDivider(
+            color = Color(0xFFE2E8F0),
+            thickness = 1.dp,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Why Choose Homigo?",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B)
+            )
+
+            // Trust Cards
+            listOf(
+                Triple("🎓", "Verified University Students", "Only authenticated student profiles."),
+                Triple("❤️", "Compatibility Based Matching", "Find roommates based on lifestyle and preferences."),
+                Triple("🔒", "Private & Secure", "Your information is protected using secure authentication.")
+            ).forEach { (emoji, title, desc) ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    border = BorderStroke(1.dp, Color(0xFFF1F5F9)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(text = emoji, fontSize = 28.sp)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = title,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1E293B)
+                            )
+                            Text(
+                                text = desc,
+                                fontSize = 12.sp,
+                                color = Color(0xFF64748B)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
