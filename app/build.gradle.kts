@@ -4,6 +4,20 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// ---------------------------------------------------------------------------
+// Read the developer-specific backend URL from local.properties.
+// Each collaborator sets LOCAL_BASE_URL in their own (un-tracked) local.properties
+// so that no one has to touch version-controlled files when switching IPs.
+// ---------------------------------------------------------------------------
+val localProps = java.util.Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) load(file.inputStream())
+}
+val localBaseUrl: String = localProps.getProperty(
+    "LOCAL_BASE_URL",
+    "http://10.0.2.2:5001/api/"          // default: host loopback via Android emulator
+)
+
 android {
     namespace = "com.example.homigo"
     compileSdk = 34
@@ -22,6 +36,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Use the developer's LOCAL_BASE_URL (from local.properties)
+            buildConfigField("String", "BASE_URL", "\"${localBaseUrl}\"")
+        }
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("debug")
@@ -29,6 +47,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Production / tunnel URL – update this when your prod backend changes
+            buildConfigField("String", "BASE_URL", "\"https://homigo-prod.lhr.life/api/\"")
         }
     }
     compileOptions {
@@ -40,6 +60,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {
