@@ -690,11 +690,14 @@ fun MaleWelcomeIllustration(modifier: Modifier = Modifier) {
         )
 
         val hairPath1 = Path().apply {
-            moveTo(x1 - w * 0.05f, y1 - h * 0.02f)
-            lineTo(x1 + w * 0.05f, y1 - h * 0.02f)
-            lineTo(x1 + w * 0.03f, y1 - h * 0.06f)
-            lineTo(x1, y1 - h * 0.04f)
-            lineTo(x1 - w * 0.03f, y1 - h * 0.06f)
+            moveTo(x1 - w * 0.05f, y1 - h * 0.01f)
+            quadraticBezierTo(x1 - w * 0.06f, y1 - w * 0.06f, x1, y1 - w * 0.065f)
+            quadraticBezierTo(x1 + w * 0.06f, y1 - w * 0.06f, x1 + w * 0.05f, y1 - h * 0.01f)
+            lineTo(x1 + w * 0.03f, y1 - w * 0.02f)
+            lineTo(x1 + w * 0.015f, y1 - w * 0.035f)
+            lineTo(x1, y1 - w * 0.02f)
+            lineTo(x1 - w * 0.015f, y1 - w * 0.035f)
+            lineTo(x1 - w * 0.03f, y1 - w * 0.02f)
             close()
         }
         drawPath(path = hairPath1, color = Color(0xFF1E293B))
@@ -789,10 +792,12 @@ fun MaleWelcomeIllustration(modifier: Modifier = Modifier) {
         )
 
         val hairPath2 = Path().apply {
-            moveTo(x2 - w * 0.05f, y2 - h * 0.02f)
-            lineTo(x2 + w * 0.05f, y2 - h * 0.02f)
-            lineTo(x2 + w * 0.02f, y2 - h * 0.07f)
-            lineTo(x2 - w * 0.02f, y2 - h * 0.06f)
+            moveTo(x2 - w * 0.05f, y2 - h * 0.01f)
+            quadraticBezierTo(x2 - w * 0.06f, y2 - w * 0.06f, x2, y2 - w * 0.065f)
+            quadraticBezierTo(x2 + w * 0.06f, y2 - w * 0.06f, x2 + w * 0.05f, y2 - h * 0.01f)
+            lineTo(x2 + w * 0.02f, y2 - w * 0.025f)
+            lineTo(x2, y2 - w * 0.015f)
+            lineTo(x2 - w * 0.02f, y2 - w * 0.03f)
             close()
         }
         drawPath(path = hairPath2, color = Color(0xFF451A03))
