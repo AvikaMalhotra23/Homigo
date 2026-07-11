@@ -1,5 +1,7 @@
 const dbHelper = require('../db/database');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 exports.addExpense = async (req, res) => {
   const creatorId = req.user.id;
   const { title, amount, category, participantIds } = req.body; // participantIds is an array of IDs of roommates, excluding the creator
@@ -31,8 +33,11 @@ exports.addExpense = async (req, res) => {
 
     res.status(201).json({ ok: true, message: 'Expense added and split successfully', expenseId });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('[expenseController.addExpense ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };
 
@@ -60,15 +65,18 @@ exports.getExpenses = async (req, res) => {
          FROM expense_splits es 
          JOIN users u ON es.user_id = u.id 
          WHERE es.expense_id = ?`,
-        [exp.id]
+         [exp.id]
       );
       exp.splits = splits;
     }
 
     res.json(expenses);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('[expenseController.getExpenses ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };
 
@@ -98,8 +106,11 @@ exports.paySplit = async (req, res) => {
 
     res.json({ ok: true, message: 'Expense split marked as paid' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('[expenseController.paySplit ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };
 
@@ -150,7 +161,10 @@ exports.getSummary = async (req, res) => {
       totalOwe: parseFloat(totalOwe.toFixed(2))
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('[expenseController.getSummary ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };

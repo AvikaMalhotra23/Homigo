@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const dbHelper = require('../db/database');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'homigo_secret_key_12345';
+const isProduction = process.env.NODE_ENV === 'production';
 
 exports.register = async (req, res) => {
   const { name, email, password, gender } = req.body;
@@ -40,8 +41,11 @@ exports.register = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error occurred' });
+    console.error('[authController.register ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error occurred' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };
 
@@ -83,7 +87,10 @@ exports.login = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error occurred' });
+    console.error('[authController.login ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error occurred' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };

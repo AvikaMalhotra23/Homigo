@@ -383,26 +383,44 @@ function seedNoticesEventsMarketplace() {
 module.exports = {
   db,
   query: (sql, params = []) => {
+    console.log(`[DB QUERY] SQL: ${sql} | Params: ${JSON.stringify(params)}`);
     return new Promise((resolve, reject) => {
       db.all(sql, params, (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
+        if (err) {
+          console.error(`[DB QUERY ERROR] SQL: ${sql} | Params: ${JSON.stringify(params)}`);
+          console.error(err.stack || err);
+          reject(err);
+        } else {
+          resolve(rows);
+        }
       });
     });
   },
   get: (sql, params = []) => {
+    console.log(`[DB GET] SQL: ${sql} | Params: ${JSON.stringify(params)}`);
     return new Promise((resolve, reject) => {
       db.get(sql, params, (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
+        if (err) {
+          console.error(`[DB GET ERROR] SQL: ${sql} | Params: ${JSON.stringify(params)}`);
+          console.error(err.stack || err);
+          reject(err);
+        } else {
+          resolve(row);
+        }
       });
     });
   },
   run: (sql, params = []) => {
+    console.log(`[DB RUN] SQL: ${sql} | Params: ${JSON.stringify(params)}`);
     return new Promise((resolve, reject) => {
       db.run(sql, params, function (err) {
-        if (err) reject(err);
-        else resolve({ id: this.lastID, changes: this.changes });
+        if (err) {
+          console.error(`[DB RUN ERROR] SQL: ${sql} | Params: ${JSON.stringify(params)}`);
+          console.error(err.stack || err);
+          reject(err);
+        } else {
+          resolve({ id: this.lastID, changes: this.changes });
+        }
       });
     });
   }

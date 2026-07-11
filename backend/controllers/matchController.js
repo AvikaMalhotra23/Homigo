@@ -1,5 +1,7 @@
 const dbHelper = require('../db/database');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 exports.getMatches = async (req, res) => {
   const userId = req.user.id;
   const userGender = req.user.gender;
@@ -54,8 +56,11 @@ exports.getMatches = async (req, res) => {
 
     res.json(matches);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('[matchController.getMatches ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };
 

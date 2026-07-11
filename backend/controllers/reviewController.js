@@ -1,5 +1,7 @@
 const dbHelper = require('../db/database');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 exports.addReview = async (req, res) => {
   const reviewerId = req.user.id;
   const { revieweeId, cleanliness, respect, timeliness, noise, comment } = req.body;
@@ -49,8 +51,11 @@ exports.addReview = async (req, res) => {
 
     res.json({ ok: true, message: 'Review submitted successfully' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('[reviewController.addReview ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };
 
@@ -95,7 +100,10 @@ exports.getReviews = async (req, res) => {
       reviews: list
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('[reviewController.getReviews ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };

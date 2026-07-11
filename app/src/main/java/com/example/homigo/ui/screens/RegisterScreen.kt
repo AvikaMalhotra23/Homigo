@@ -1,18 +1,20 @@
 package com.example.homigo.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.homigo.data.repository.HomigoRepository
-import com.example.homigo.ui.theme.HomigoTheme
+import com.example.homigo.ui.theme.*
 import kotlinx.coroutines.launch
 
 @Composable
@@ -31,37 +33,34 @@ fun RegisterScreen(
 
     val coroutineScope = rememberCoroutineScope()
 
-    // Wrap the registration screen in the dynamic HomigoTheme based on the CURRENT gender selection!
-    // This allows the user to see the theme change instantly as they select their gender.
-    HomigoTheme(gender = gender) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
+    HomigoTheme(gender = gender, completion = 0) {
+        FloatingBackground(gender = gender, completion = 0) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .padding(20.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Column(
+                LiquidGlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    density = GlassDensity.HIGH
                 ) {
                     Text(
                         text = "Create Account",
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
 
                     Text(
                         text = "Campus: $selectedCollegeName",
-                        fontSize = 16.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(bottom = 12.dp)
+                        color = SecondaryText,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 4.dp, bottom = 20.dp)
                     )
 
                     OutlinedTextField(
@@ -69,16 +68,38 @@ fun RegisterScreen(
                         onValueChange = { name = it; errorMessage = null },
                         label = { Text("Full Name") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Graphite,
+                            unfocusedTextColor = Graphite,
+                            focusedLabelColor = SecondaryText,
+                            unfocusedLabelColor = SecondaryText,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = Border
+                        )
                     )
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = course,
                         onValueChange = { course = it; errorMessage = null },
                         label = { Text("Course (e.g. B.Tech, MBA, BCA)") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Graphite,
+                            unfocusedTextColor = Graphite,
+                            focusedLabelColor = SecondaryText,
+                            unfocusedLabelColor = SecondaryText,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = Border
+                        )
                     )
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = email,
@@ -86,8 +107,19 @@ fun RegisterScreen(
                         label = { Text("College Email ID") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Graphite,
+                            unfocusedTextColor = Graphite,
+                            focusedLabelColor = SecondaryText,
+                            unfocusedLabelColor = SecondaryText,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = Border
+                        )
                     )
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
                         value = password,
@@ -96,60 +128,78 @@ fun RegisterScreen(
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Graphite,
+                            unfocusedTextColor = Graphite,
+                            focusedLabelColor = SecondaryText,
+                            unfocusedLabelColor = SecondaryText,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = Border
+                        )
                     )
 
-                    // Gender Selection Row (Updates application theme dynamically!)
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Gender Selection Column
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "Gender Selection (Determines theme styling)",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp
+                            text = "Gender",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Graphite
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Button(
                                 onClick = { gender = "male" },
+                                shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (gender == "male") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                    contentColor = if (gender == "male") MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+                                    containerColor = if (gender == "male") MaterialTheme.colorScheme.primary else Color.Black.copy(alpha = 0.05f),
+                                    contentColor = if (gender == "male") Color.White else Graphite
                                 ),
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text("Boy (Sky Blue)")
+                                Text("Boy", fontWeight = FontWeight.Bold)
                             }
                             Button(
                                 onClick = { gender = "female" },
+                                shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (gender == "female") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                    contentColor = if (gender == "female") MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+                                    containerColor = if (gender == "female") MaterialTheme.colorScheme.primary else Color.Black.copy(alpha = 0.05f),
+                                    contentColor = if (gender == "female") Color.White else Graphite
                                 ),
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text("Girl (Baby Pink)")
+                                Text("Girl", fontWeight = FontWeight.Bold)
                             }
                         }
                     }
 
                     if (errorMessage != null) {
+                        Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = errorMessage!!,
                             color = MaterialTheme.colorScheme.error,
-                            fontSize = 14.sp,
-                            modifier = Modifier.align(Alignment.Start)
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
 
-                    Button(
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    LiquidGlassButton(
+                        text = if (isLoading) "Registering..." else "Register",
                         onClick = {
                             if (name.isBlank() || course.isBlank() || email.isBlank() || password.isBlank()) {
                                 errorMessage = "Please fill in all fields"
-                                return@Button
+                                return@LiquidGlassButton
                             }
                             isLoading = true
                             coroutineScope.launch {
@@ -170,25 +220,19 @@ fun RegisterScreen(
                                 }
                             }
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         enabled = !isLoading
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
-                        } else {
-                            Text("Register", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
-                        modifier = Modifier.padding(top = 16.dp),
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Already have an account? ")
+                        Text("Already have an account? ", fontSize = 13.sp, color = SecondaryText)
                         TextButton(onClick = onNavigateToLogin) {
-                            Text("Log In", fontWeight = FontWeight.Bold)
+                            Text("Log In", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }

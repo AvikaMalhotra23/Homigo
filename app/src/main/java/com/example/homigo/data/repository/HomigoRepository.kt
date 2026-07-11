@@ -19,6 +19,20 @@ object HomigoRepository {
     private val _myProfile = MutableStateFlow<Profile?>(null)
     val myProfile: StateFlow<Profile?> = _myProfile.asStateFlow()
 
+    private val _profileCompletion = MutableStateFlow<Int>(0)
+    val profileCompletion: StateFlow<Int> = _profileCompletion.asStateFlow()
+
+    fun calculateCompletion(p: Profile?): Int {
+        if (p == null) return 0
+        val fields = listOf(
+            p.bio, p.branch, p.year, p.semester?.toString(), p.languages, p.hometown,
+            p.interests, p.budget_min.toString(), p.budget_max.toString(), p.sleep_schedule,
+            p.food_preference, p.cleanliness, p.college, p.hostel, p.course, p.roll_number, p.section
+        )
+        val filled = fields.filter { !it.isNullOrBlank() && it != "0" && it != "[]" }.size
+        return Math.round((filled.toFloat() / fields.size) * 100)
+    }
+
     fun setSession(jwtToken: String, user: User) {
         _token.value = "Bearer $jwtToken"
         _currentUser.value = user
@@ -28,10 +42,12 @@ object HomigoRepository {
         _token.value = null
         _currentUser.value = null
         _myProfile.value = null
+        _profileCompletion.value = 0
     }
 
     fun updateLocalProfile(profile: Profile) {
         _myProfile.value = profile
+        _profileCompletion.value = calculateCompletion(profile)
         // If gender in profile updates, synchronize user gender
         _currentUser.value = _currentUser.value?.copy(gender = profile.gender ?: _currentUser.value?.gender ?: "male")
     }
@@ -52,6 +68,7 @@ object HomigoRepository {
         val authToken = _token.value ?: throw Exception("Not authenticated")
         val profile = api.getProfile(authToken)
         _myProfile.value = profile
+        _profileCompletion.value = calculateCompletion(profile)
         return profile
     }
 

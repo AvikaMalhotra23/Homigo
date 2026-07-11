@@ -1,5 +1,7 @@
 const dbHelper = require('../db/database');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 exports.sendRequest = async (req, res) => {
   const senderId = req.user.id;
   const { receiverId } = req.body;
@@ -32,8 +34,11 @@ exports.sendRequest = async (req, res) => {
 
     res.json({ ok: true, message: 'Roommate request sent successfully' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('[requestController.sendRequest ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };
 
@@ -63,8 +68,11 @@ exports.getRequests = async (req, res) => {
 
     res.json({ incoming, sent });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('[requestController.getRequests ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };
 
@@ -94,7 +102,10 @@ exports.respondToRequest = async (req, res) => {
 
     res.json({ ok: true, message: `Roommate request ${status} successfully` });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('[requestController.respondToRequest ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };

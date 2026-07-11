@@ -1,5 +1,7 @@
 const dbHelper = require('../db/database');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 exports.getMe = async (req, res) => {
   try {
     const profile = await dbHelper.get(
@@ -19,8 +21,11 @@ exports.getMe = async (req, res) => {
 
     res.json(profile);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('[profileController.getMe ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };
 
@@ -90,7 +95,7 @@ exports.updateProfile = async (req, res) => {
           budget_min, budget_max, sleep_schedule, smoking, drinking, food_preference, cleanliness, pets, guests, bio, 
           is_verified, fake_risk_score, deal_breakers, room_purpose,
           wake_up_time, study_style, room_environment, personality_type, daily_routine, work_style
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           userId, safeCollege, safeHostel, safeRoomPref, safeCourse, branch || '', year || '', semester || 1, section || '',
           roll_number || '', school || '', looking_for || 'Roommate', preferred_hostel || safeHostel, current_hostel || safeHostel, room_number || '',
@@ -104,8 +109,11 @@ exports.updateProfile = async (req, res) => {
 
     res.json({ ok: true, message: 'Profile updated successfully' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('[profileController.updateProfile ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };
 
@@ -131,7 +139,10 @@ exports.uploadIdProof = async (req, res) => {
 
     res.json({ ok: true, message: 'ID proof uploaded and verified successfully' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('[profileController.uploadIdProof ERROR]', err);
+    res.status(500).json({ 
+      error: isProduction ? 'Database error' : `Database error: ${err.message}`, 
+      stack: isProduction ? undefined : err.stack 
+    });
   }
 };

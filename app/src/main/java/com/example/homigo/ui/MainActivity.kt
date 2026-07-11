@@ -20,16 +20,30 @@ import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.example.homigo.data.repository.HomigoRepository
 import com.example.homigo.ui.screens.*
-import com.example.homigo.ui.theme.HomigoTheme
+import com.example.homigo.ui.theme.*
+import androidx.compose.ui.graphics.Color
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val tokenState = HomigoRepository.token.collectAsState()
             val currentUserState = HomigoRepository.currentUser.collectAsState()
             val gender = currentUserState.value?.gender ?: "male"
+            val completionState = HomigoRepository.profileCompletion.collectAsState()
+            val completion = completionState.value
 
-            HomigoTheme(gender = gender) {
+            LaunchedEffect(tokenState.value) {
+                if (tokenState.value != null) {
+                    try {
+                        HomigoRepository.fetchProfile()
+                    } catch (e: Exception) {
+                        // ignore if profile not set up yet
+                    }
+                }
+            }
+
+            HomigoTheme(gender = gender, completion = completion) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -113,6 +127,10 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToChat = { otherUserId, otherUserName ->
                                     navController.navigate("chat/$otherUserId/$otherUserName")
                                 },
+                                onNavigateToChatbot = { navController.navigate("chatbot") },
+                                onNavigateToExpenses = { navController.navigate("expenses") },
+                                onNavigateToRequests = { navController.navigate("requests") },
+                                onNavigateToReviews = { navController.navigate("reviews") },
                                 onLogout = {
                                     HomigoRepository.clearSession()
                                     navController.navigate("login") {
@@ -120,6 +138,22 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             )
+                        }
+
+                        composable("chatbot") {
+                            ChatbotScreen()
+                        }
+
+                        composable("expenses") {
+                            ExpenseScreen()
+                        }
+
+                        composable("requests") {
+                            RequestsScreen()
+                        }
+
+                        composable("reviews") {
+                            ReviewsScreen()
                         }
 
                         composable(
@@ -146,17 +180,12 @@ class MainActivity : ComponentActivity() {
 
 // ─── TAB DEFINITION ──────────────────────────────────────────────────────────
 
-private data class BottomTab(
-    val label: String,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector
-)
-
 private val tabs = listOf(
     BottomTab("Home",     Icons.Filled.Home,       Icons.Outlined.Home),
     BottomTab("Discover", Icons.Filled.Search,      Icons.Outlined.Search),
-    BottomTab("Chat",     Icons.Filled.Email,       Icons.Outlined.Email),
-    BottomTab("Profile",  Icons.Filled.AccountCircle, Icons.Outlined.AccountCircle)
+    BottomTab("AI Radar", Icons.Filled.Star,        Icons.Outlined.Star),
+    BottomTab("Chats",     Icons.Filled.Email,       Icons.Outlined.Email),
+    BottomTab("Me",       Icons.Filled.AccountCircle, Icons.Outlined.AccountCircle)
 )
 
 // ─── MAIN TAB SCREEN ─────────────────────────────────────────────────────────
@@ -165,40 +194,31 @@ private val tabs = listOf(
 @Composable
 fun MainTabScreen(
     onNavigateToChat: (otherUserId: Int, otherUserName: String) -> Unit,
+    onNavigateToChatbot: () -> Unit,
+    onNavigateToExpenses: () -> Unit,
+    onNavigateToRequests: () -> Unit,
+    onNavigateToReviews: () -> Unit,
     onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
 
+    val currentUserState = HomigoRepository.currentUser.collectAsState()
+    val completionState = HomigoRepository.profileCompletion.collectAsState()
+
+    val gender = currentUserState.value?.gender ?: "male"
+    val completion = completionState.value
+
     Scaffold(
         bottomBar = {
-            NavigationBar(
-                modifier = Modifier.height(76.dp),
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 0.dp
-            ) {
-                tabs.forEachIndexed { index, tab ->
-                    NavigationBarItem(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        label = { Text(tab.label, fontSize = 11.sp) },
-                        icon = {
-                            Icon(
-                                imageVector = if (selectedTab == index) tab.selectedIcon else tab.unselectedIcon,
-                                contentDescription = tab.label,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            selectedTextColor = MaterialTheme.colorScheme.primary,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    )
-                }
-            }
-        }
+            FloatingGlassBottomNavigation(
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it },
+                tabs = tabs,
+                gender = gender,
+                completion = completion
+            )
+        },
+        containerColor = Color.Transparent // Allow background gradients to flow fully
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -219,11 +239,17 @@ fun MainTabScreen(
                 when (tab) {
                     0 -> HomeScreen(
                         onNavigateToChat = onNavigateToChat,
-                        onCompleteProfileClick = { selectedTab = 3 }
+                        onCompleteProfileClick = { selectedTab = 4 },
+                        onNavigateToChatbot = onNavigateToChatbot,
+                        onNavigateToExpenses = onNavigateToExpenses,
+                        onNavigateToRequests = onNavigateToRequests,
+                        onNavigateToReviews = onNavigateToReviews,
+                        onNavigateToDiscover = { selectedTab = 1 }
                     )
                     1 -> ExploreScreen()
-                    2 -> ChatListScreen(onNavigateToChat = onNavigateToChat)
-                    3 -> ProfileSetupScreen(onSetupComplete = {})
+                    2 -> AIRadarScreen()
+                    3 -> ChatListScreen(onNavigateToChat = onNavigateToChat)
+                    4 -> ProfileSetupScreen(onSetupComplete = {})
                 }
             }
         }

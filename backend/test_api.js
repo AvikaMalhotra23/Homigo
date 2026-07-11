@@ -61,9 +61,10 @@ async function runTests() {
 
     // 2. Register Boy
     console.log("\nRegistering a test boy...");
+    const boyEmail = `kabir_${Date.now()}@lpu.in`;
     const registerBoy = await request('/auth/register', 'POST', {
       name: "Kabir Singh",
-      email: "kabir@lpu.in",
+      email: boyEmail,
       password: "password123",
       gender: "male"
     });
@@ -72,9 +73,10 @@ async function runTests() {
 
     // 3. Register Girl
     console.log("\nRegistering a test girl...");
+    const girlEmail = `simran_${Date.now()}@lpu.in`;
     const registerGirl = await request('/auth/register', 'POST', {
       name: "Simran Kaur",
-      email: "simran@lpu.in",
+      email: girlEmail,
       password: "password123",
       gender: "female"
     });
