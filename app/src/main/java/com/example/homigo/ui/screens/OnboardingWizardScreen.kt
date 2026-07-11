@@ -852,13 +852,7 @@ fun FemaleWelcomeIllustration(modifier: Modifier = Modifier) {
         val x1 = w * 0.35f + walkOffset.dp.toPx()
         val y1 = h * 0.4f
 
-        drawRoundRect(
-            color = Color(0xFFF472B6),
-            topLeft = Offset(x1 - w * 0.07f, y1 + h * 0.08f),
-            size = androidx.compose.ui.geometry.Size(w * 0.05f, h * 0.14f),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(6.dp.toPx())
-        )
-
+        // Legs walking
         drawLine(
             color = Color(0xFF1E293B),
             start = Offset(x1 - w * 0.02f, y1 + h * 0.28f),
@@ -874,8 +868,26 @@ fun FemaleWelcomeIllustration(modifier: Modifier = Modifier) {
             cap = androidx.compose.ui.graphics.StrokeCap.Round
         )
 
+        // Shoulder Handbag Strap & Bag
+        val strapPath = Path().apply {
+            moveTo(x1 - w * 0.04f, y1 + h * 0.05f)
+            quadraticBezierTo(x1 - w * 0.08f, y1 + h * 0.1f, x1 - w * 0.06f, y1 + h * 0.15f)
+        }
+        drawPath(
+            path = strapPath,
+            color = Color(0xFF1E293B),
+            style = strokeStyle(width = 2.dp.toPx())
+        )
+        drawRoundRect(
+            color = Color(0xFF475569),
+            topLeft = Offset(x1 - w * 0.08f, y1 + h * 0.15f),
+            size = androidx.compose.ui.geometry.Size(w * 0.04f, h * 0.05f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+        )
+
+        // Girl 1 Jacket (Oversized shirt)
         val bodyBrush = Brush.linearGradient(
-            colors = listOf(Color(0xFFDB2777), Color(0xFFF472B6)),
+            colors = listOf(Color(0xFFF43F5E), Color(0xFFFDA4AF)),
             start = Offset(x1 - w * 0.055f, y1 + h * 0.05f),
             end = Offset(x1 + w * 0.055f, y1 + h * 0.28f)
         )
@@ -886,35 +898,25 @@ fun FemaleWelcomeIllustration(modifier: Modifier = Modifier) {
             cornerRadius = androidx.compose.ui.geometry.CornerRadius(12.dp.toPx())
         )
 
-        drawRoundRect(
-            color = Color(0xFFFB7185),
-            topLeft = Offset(x1 + w * 0.01f, y1 + h * 0.11f),
-            size = androidx.compose.ui.geometry.Size(w * 0.07f, h * 0.05f),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
-        )
-        drawRoundRect(
-            color = Color(0xFFFDA4AF),
-            topLeft = Offset(x1 + w * 0.015f, y1 + h * 0.09f),
-            size = androidx.compose.ui.geometry.Size(w * 0.06f, h * 0.04f),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
-        )
-
+        // Girl 1 Head
         drawCircle(
             color = Color(0xFFFDBA74),
             radius = w * 0.048f,
             center = Offset(x1, y1)
         )
 
+        // Girl 1 Hair (Loose straight hair moving slightly)
         val hairPath1 = Path().apply {
             moveTo(x1 - w * 0.055f, y1 + h * 0.08f)
-            quadraticBezierTo(x1 - w * 0.06f, y1 - h * 0.03f, x1, y1 - h * 0.06f)
-            quadraticBezierTo(x1 + w * 0.06f, y1 - h * 0.03f, x1 + w * 0.055f, y1 + h * 0.08f)
-            lineTo(x1 + w * 0.045f, y1 + h * 0.12f)
-            lineTo(x1 - w * 0.045f, y1 + h * 0.12f)
+            quadraticBezierTo(x1 - w * 0.06f, y1 - h * 0.04f, x1, y1 - h * 0.06f)
+            quadraticBezierTo(x1 + w * 0.06f, y1 - h * 0.04f, x1 + w * 0.055f, y1 + h * 0.08f)
+            lineTo(x1 + w * 0.05f, y1 + h * 0.13f)
+            lineTo(x1 - w * 0.05f, y1 + h * 0.13f)
             close()
         }
-        drawPath(path = hairPath1, color = Color(0xFF3730A3))
+        drawPath(path = hairPath1, color = Color(0xFF1E293B))
 
+        // Girl 1 Face Features
         drawCircle(color = Color(0xFF1E293B), radius = 2f, center = Offset(x1 + w * 0.02f, y1 - h * 0.005f))
         drawArc(
             color = Color(0xFF1E293B),
@@ -926,10 +928,40 @@ fun FemaleWelcomeIllustration(modifier: Modifier = Modifier) {
             style = strokeStyle(width = 1.8f.dp.toPx())
         )
 
+        // Girl 1 Suitcase (Soft blush pink)
+        val suitcase1X = x1 - w * 0.16f
+        val suitcase1Y = h * 0.62f
+        drawRoundRect(
+            color = Color(0xFFFDA4AF),
+            topLeft = Offset(suitcase1X, suitcase1Y),
+            size = androidx.compose.ui.geometry.Size(w * 0.09f, h * 0.15f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+        )
+        drawArc(
+            color = Color(0xFF1E293B),
+            startAngle = 180f,
+            sweepAngle = 180f,
+            useCenter = false,
+            topLeft = Offset(suitcase1X + w * 0.02f, suitcase1Y - h * 0.02f),
+            size = androidx.compose.ui.geometry.Size(w * 0.05f, h * 0.04f),
+            style = strokeStyle(width = 2.dp.toPx())
+        )
+        drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcase1X + w * 0.02f, suitcase1Y + h * 0.15f))
+        drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcase1X + w * 0.07f, suitcase1Y + h * 0.15f))
+
+        // Suitcase 1 Pulling handle line
+        drawLine(
+            color = Color(0xFF1E293B),
+            start = Offset(x1 - w * 0.055f, y1 + h * 0.18f),
+            end = Offset(suitcase1X + w * 0.045f, suitcase1Y - h * 0.01f),
+            strokeWidth = 2.dp.toPx()
+        )
+
         // Girl 2 (Right)
         val x2 = w * 0.58f - walkOffset.dp.toPx()
         val y2 = h * 0.38f
 
+        // Legs walking
         drawLine(
             color = Color(0xFF1E293B),
             start = Offset(x2 - w * 0.02f, y2 + h * 0.28f),
@@ -945,8 +977,9 @@ fun FemaleWelcomeIllustration(modifier: Modifier = Modifier) {
             cap = androidx.compose.ui.graphics.StrokeCap.Round
         )
 
+        // Girl 2 Body (Pastel shirt/jacket)
         val bodyBrush2 = Brush.linearGradient(
-            colors = listOf(Color(0xFFBE185D), Color(0xFFF472B6)),
+            colors = listOf(Color(0xFFEC4899), Color(0xFFF472B6)),
             start = Offset(x2 - w * 0.055f, y2 + h * 0.05f),
             end = Offset(x2 + w * 0.055f, y2 + h * 0.28f)
         )
@@ -957,12 +990,32 @@ fun FemaleWelcomeIllustration(modifier: Modifier = Modifier) {
             cornerRadius = androidx.compose.ui.geometry.CornerRadius(12.dp.toPx())
         )
 
+        // Coffee Cup in hand
+        drawRoundRect(
+            color = Color(0xFFE2E8F0),
+            topLeft = Offset(x2 - w * 0.08f, y2 + h * 0.12f),
+            size = androidx.compose.ui.geometry.Size(w * 0.03f, h * 0.04f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(1.dp.toPx())
+        )
+        drawRect(
+            color = Color(0xFFB45309),
+            topLeft = Offset(x2 - w * 0.08f, y2 + h * 0.13f),
+            size = androidx.compose.ui.geometry.Size(w * 0.03f, h * 0.02f)
+        )
+        drawRect(
+            color = Color.White,
+            topLeft = Offset(x2 - w * 0.085f, y2 + h * 0.115f),
+            size = androidx.compose.ui.geometry.Size(w * 0.04f, h * 0.008f)
+        )
+
+        // Girl 2 Head
         drawCircle(
-            color = Color(0xFFFECACA),
+            color = Color(0xFFFDBA74),
             radius = w * 0.048f,
             center = Offset(x2, y2)
         )
 
+        // Girl 2 Hair (High ponytail)
         drawCircle(
             color = Color(0xFF78350F),
             radius = w * 0.055f,
@@ -976,6 +1029,7 @@ fun FemaleWelcomeIllustration(modifier: Modifier = Modifier) {
         }
         drawPath(path = ponytailPath, color = Color(0xFF78350F))
 
+        // Girl 2 Face Features
         drawCircle(color = Color(0xFF1E293B), radius = 2f, center = Offset(x2 - w * 0.02f, y2 - h * 0.005f))
         drawArc(
             color = Color(0xFF1E293B),
@@ -987,12 +1041,12 @@ fun FemaleWelcomeIllustration(modifier: Modifier = Modifier) {
             style = strokeStyle(width = 1.8f.dp.toPx())
         )
 
-        // Suitcase
-        val suitcaseX = x2 + w * 0.07f
-        val suitcaseY = h * 0.62f
+        // Girl 2 Suitcase (Ivory/Champagne)
+        val suitcase2X = x2 + w * 0.07f
+        val suitcase2Y = h * 0.62f
         drawRoundRect(
-            color = Color(0xFF9333EA),
-            topLeft = Offset(suitcaseX, suitcaseY),
+            color = Color(0xFFFAF9F6),
+            topLeft = Offset(suitcase2X, suitcase2Y),
             size = androidx.compose.ui.geometry.Size(w * 0.09f, h * 0.15f),
             cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
         )
@@ -1001,12 +1055,20 @@ fun FemaleWelcomeIllustration(modifier: Modifier = Modifier) {
             startAngle = 180f,
             sweepAngle = 180f,
             useCenter = false,
-            topLeft = Offset(suitcaseX + w * 0.02f, suitcaseY - h * 0.02f),
+            topLeft = Offset(suitcase2X + w * 0.02f, suitcase2Y - h * 0.02f),
             size = androidx.compose.ui.geometry.Size(w * 0.05f, h * 0.04f),
             style = strokeStyle(width = 2.dp.toPx())
         )
-        drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcaseX + w * 0.02f, suitcaseY + h * 0.15f))
-        drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcaseX + w * 0.07f, suitcaseY + h * 0.15f))
+        drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcase2X + w * 0.02f, suitcase2Y + h * 0.15f))
+        drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcase2X + w * 0.07f, suitcase2Y + h * 0.15f))
+
+        // Suitcase 2 Pulling handle line
+        drawLine(
+            color = Color(0xFF1E293B),
+            start = Offset(x2 + w * 0.055f, y2 + h * 0.18f),
+            end = Offset(suitcase2X + w * 0.045f, suitcase2Y - h * 0.01f),
+            strokeWidth = 2.dp.toPx()
+        )
     }
 }
 
