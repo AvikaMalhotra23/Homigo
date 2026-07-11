@@ -24,4 +24,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "Homigo"
 include(":app")
-include(":app:homigo")
