@@ -710,6 +710,40 @@ fun MaleWelcomeIllustration(modifier: Modifier = Modifier) {
             style = strokeStyle()
         )
 
+        // Boy 1 Suitcase (contrasting dark blue)
+        val suitcase1X = x1 - w * 0.16f
+        val suitcase1Y = h * 0.62f
+        drawRoundRect(
+            color = Color(0xFF1E3A8A),
+            topLeft = Offset(suitcase1X, suitcase1Y),
+            size = androidx.compose.ui.geometry.Size(w * 0.09f, h * 0.15f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+        )
+        drawArc(
+            color = Color(0xFF1E293B),
+            startAngle = 180f,
+            sweepAngle = 180f,
+            useCenter = false,
+            topLeft = Offset(suitcase1X + w * 0.02f, suitcase1Y - h * 0.02f),
+            size = androidx.compose.ui.geometry.Size(w * 0.05f, h * 0.04f),
+            style = strokeStyle(width = 2.dp.toPx())
+        )
+        drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcase1X + w * 0.02f, suitcase1Y + h * 0.15f))
+        drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcase1X + w * 0.07f, suitcase1Y + h * 0.15f))
+
+        // Suitcase 1 Pulling handle line & hand
+        drawLine(
+            color = Color(0xFF1E293B),
+            start = Offset(x1 - w * 0.055f, y1 + h * 0.18f),
+            end = Offset(suitcase1X + w * 0.045f, suitcase1Y - h * 0.01f),
+            strokeWidth = 2.dp.toPx()
+        )
+        drawCircle(
+            color = Color(0xFFFDBA74),
+            radius = 3.dp.toPx(),
+            center = Offset(suitcase1X + w * 0.045f, suitcase1Y - h * 0.01f)
+        )
+
         // Boy 2 (Right)
         val x2 = w * 0.58f - walkOffset.dp.toPx()
         val y2 = h * 0.38f
@@ -774,7 +808,7 @@ fun MaleWelcomeIllustration(modifier: Modifier = Modifier) {
             style = strokeStyle()
         )
 
-        // Suitcase
+        // Boy 2 Suitcase
         val suitcaseX = x2 + w * 0.08f
         val suitcaseY = h * 0.62f
         drawRoundRect(
@@ -794,6 +828,19 @@ fun MaleWelcomeIllustration(modifier: Modifier = Modifier) {
         )
         drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcaseX + w * 0.02f, suitcaseY + h * 0.15f))
         drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcaseX + w * 0.07f, suitcaseY + h * 0.15f))
+
+        // Suitcase 2 Pulling handle line & hand
+        drawLine(
+            color = Color(0xFF1E293B),
+            start = Offset(x2 + w * 0.055f, y2 + h * 0.18f),
+            end = Offset(suitcaseX + w * 0.045f, suitcaseY - h * 0.01f),
+            strokeWidth = 2.dp.toPx()
+        )
+        drawCircle(
+            color = Color(0xFFFED7AA),
+            radius = 3.dp.toPx(),
+            center = Offset(suitcaseX + w * 0.045f, suitcaseY - h * 0.01f)
+        )
     }
 }
 
@@ -924,23 +971,37 @@ fun FemaleWelcomeIllustration(modifier: Modifier = Modifier) {
             center = Offset(x1 + w * 0.035f, y1 - h * 0.02f)
         )
 
-        // Girl 1 Hair (flowing down long hair, swaying with walkOffset)
-        val hairSway = walkOffset * 0.5f
-        val hairPath1 = Path().apply {
+        // Girl 1 Hair: TWO BRAIDS (swaying with walkOffset)
+        val braidSway = walkOffset * 0.8f
+        // Hair base cap
+        val hairBase1 = Path().apply {
             moveTo(x1 - w * 0.05f, y1 + h * 0.04f)
             quadraticBezierTo(x1 - w * 0.06f, y1 - h * 0.04f, x1, y1 - h * 0.055f)
             quadraticBezierTo(x1 + w * 0.06f, y1 - h * 0.04f, x1 + w * 0.05f, y1 + h * 0.04f)
-            // Left hair lock flowing past shoulder
-            lineTo(x1 + w * 0.055f + hairSway.dp.toPx(), y1 + h * 0.16f)
-            lineTo(x1 + w * 0.035f + hairSway.dp.toPx(), y1 + h * 0.16f)
-            lineTo(x1 + w * 0.03f, y1 + h * 0.05f)
-            // Right hair lock
-            lineTo(x1 - w * 0.03f, y1 + h * 0.05f)
-            lineTo(x1 - w * 0.035f + hairSway.dp.toPx(), y1 + h * 0.16f)
-            lineTo(x1 - w * 0.055f + hairSway.dp.toPx(), y1 + h * 0.16f)
             close()
         }
-        drawPath(path = hairPath1, color = Color(0xFF1E293B))
+        drawPath(path = hairBase1, color = Color(0xFF1E293B))
+
+        // Left braid: 4 links of hair circles that taper and sway
+        for (i in 0..3) {
+            val bx = x1 - w * 0.045f + i * braidSway.dp.toPx() * 0.12f
+            val by = y1 + h * 0.03f + i * h * 0.035f
+            drawCircle(color = Color(0xFF1E293B), radius = (6 - i).dp.toPx(), center = Offset(bx, by))
+            if (i == 3) {
+                // Bow tie at the end of the braid
+                drawCircle(color = Color(0xFFF43F5E), radius = 2.5.dp.toPx(), center = Offset(bx, by))
+            }
+        }
+        // Right braid: 4 links of hair circles that taper and sway
+        for (i in 0..3) {
+            val bx = x1 + w * 0.045f + i * braidSway.dp.toPx() * 0.12f
+            val by = y1 + h * 0.03f + i * h * 0.035f
+            drawCircle(color = Color(0xFF1E293B), radius = (6 - i).dp.toPx(), center = Offset(bx, by))
+            if (i == 3) {
+                // Bow tie at the end of the braid
+                drawCircle(color = Color(0xFFF43F5E), radius = 2.5.dp.toPx(), center = Offset(bx, by))
+            }
+        }
 
         // Girl 1 Face Features (more expressive and feminine)
         // Eyes (front facing, with subtle eyelashes)
@@ -988,12 +1049,17 @@ fun FemaleWelcomeIllustration(modifier: Modifier = Modifier) {
         drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcase1X + w * 0.02f, suitcase1Y + h * 0.15f))
         drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcase1X + w * 0.07f, suitcase1Y + h * 0.15f))
 
-        // Suitcase 1 Pulling handle line
+        // Suitcase 1 Pulling handle line & hand
         drawLine(
             color = Color(0xFF1E293B),
             start = Offset(x1 - w * 0.055f, y1 + h * 0.18f),
             end = Offset(suitcase1X + w * 0.045f, suitcase1Y - h * 0.01f),
             strokeWidth = 2.dp.toPx()
+        )
+        drawCircle(
+            color = Color(0xFFFDBA74),
+            radius = 3.dp.toPx(),
+            center = Offset(suitcase1X + w * 0.045f, suitcase1Y - h * 0.01f)
         )
 
         // Girl 2 (Right)
@@ -1127,12 +1193,17 @@ fun FemaleWelcomeIllustration(modifier: Modifier = Modifier) {
         drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcase2X + w * 0.02f, suitcase2Y + h * 0.15f))
         drawCircle(color = Color.Black, radius = 3.dp.toPx(), center = Offset(suitcase2X + w * 0.07f, suitcase2Y + h * 0.15f))
 
-        // Suitcase 2 Pulling handle line
+        // Suitcase 2 Pulling handle line & hand
         drawLine(
             color = Color(0xFF1E293B),
             start = Offset(x2 + w * 0.055f, y2 + h * 0.18f),
             end = Offset(suitcase2X + w * 0.045f, suitcase2Y - h * 0.01f),
             strokeWidth = 2.dp.toPx()
+        )
+        drawCircle(
+            color = Color(0xFFFDBA74),
+            radius = 3.dp.toPx(),
+            center = Offset(suitcase2X + w * 0.045f, suitcase2Y - h * 0.01f)
         )
     }
 }
