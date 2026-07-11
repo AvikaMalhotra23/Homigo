@@ -4,6 +4,14 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -59,11 +67,38 @@ private val defaultColleges = listOf(
 fun ProfileSetupScreen(
     initialCollege: String? = null,
     initialCourse: String? = null,
-    onSetupComplete: () -> Unit
+    onSetupComplete: () -> Unit,
+    onLogout: (String) -> Unit = {},
+    onShowSnackbar: (String) -> Unit = {}
 ) {
     val coroutineScope = rememberCoroutineScope()
     val user = HomigoRepository.currentUser.collectAsState().value
     val currentProfile = HomigoRepository.myProfile.collectAsState().value
+
+    val logoutViewModel: com.example.homigo.ui.viewmodel.LogoutViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val logoutState by logoutViewModel.logoutState.collectAsState()
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        logoutViewModel.navigationEvent.collect { event ->
+            when (event) {
+                is com.example.homigo.ui.viewmodel.LogoutNavigationEvent.NavigateToWelcome -> {
+                    val successMsg = (logoutState as? com.example.homigo.ui.viewmodel.LogoutUiState.Success)?.message 
+                        ?: "You've been logged out successfully."
+                    showLogoutDialog = false
+                    onLogout(successMsg)
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(logoutState) {
+        if (logoutState is com.example.homigo.ui.viewmodel.LogoutUiState.Error) {
+            showLogoutDialog = false
+            onShowSnackbar((logoutState as com.example.homigo.ui.viewmodel.LogoutUiState.Error).message)
+            logoutViewModel.resetState()
+        }
+    }
 
     // Dynamic colleges state
     var collegesList by remember { mutableStateOf<List<College>>(emptyList()) }
@@ -492,6 +527,143 @@ fun ProfileSetupScreen(
                     Text("Save Profile", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Card(
+                onClick = { showLogoutDialog = true },
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 2.dp,
+                    pressedElevation = 4.dp
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp, vertical = 18.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(
+                                    color = if (isFemale) Color(0xFFFCE7F3) else Color(0xFFE0F2FE),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ExitToApp,
+                                contentDescription = "Log Out Icon",
+                                tint = Color(0xFFEF4444),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                text = "Log Out",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = Color(0xFF1F2937)
+                            )
+                            Text(
+                                text = "Sign out from your Homigo account securely.",
+                                fontSize = 12.sp,
+                                color = Color(0xFF6B7280)
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowRight,
+                        contentDescription = "Chevron",
+                        tint = if (isFemale) Color(0xFFF472B6) else Color(0xFF38BDF8),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+        }
+
+        if (showLogoutDialog) {
+            val isLoggingOut = logoutState is com.example.homigo.ui.viewmodel.LogoutUiState.Loading
+            
+            AlertDialog(
+                onDismissRequest = { if (!isLoggingOut) showLogoutDialog = false },
+                title = {
+                    Text(
+                        text = "Log Out",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                text = {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Are you sure you want to log out of your account?",
+                            fontSize = 15.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (isLoggingOut) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            CircularProgressIndicator(
+                                color = if (isFemale) Color(0xFFF472B6) else Color(0xFF38BDF8)
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            logoutViewModel.logout()
+                        },
+                        enabled = !isLoggingOut,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFEF4444),
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text("Log Out", fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    OutlinedButton(
+                        onClick = { showLogoutDialog = false },
+                        enabled = !isLoggingOut,
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = if (isFemale) Color(0xFFF472B6) else Color(0xFF38BDF8)
+                        ),
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = if (isFemale) Color(0xFFFCE7F3) else Color(0xFFE0F2FE)
+                        )
+                    ) {
+                        Text("Cancel")
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp
+            )
         }
     }
 }

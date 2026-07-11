@@ -94,3 +94,8 @@ exports.login = async (req, res) => {
     });
   }
 };
+
+exports.logout = async (req, res) => {
+  res.json({ success: true, message: 'Logged out successfully.' });
+};
+

@@ -33,9 +33,22 @@ object HomigoRepository {
         return Math.round((filled.toFloat() / fields.size) * 100)
     }
 
+    private var sessionManager: com.example.homigo.data.local.SessionManager? = null
+
+    fun init(context: android.content.Context) {
+        sessionManager = com.example.homigo.data.local.SessionManager(context)
+        val savedToken = sessionManager?.getToken()
+        val savedUser = sessionManager?.getUser()
+        if (savedToken != null && savedUser != null) {
+            _token.value = "Bearer $savedToken"
+            _currentUser.value = savedUser
+        }
+    }
+
     fun setSession(jwtToken: String, user: User) {
         _token.value = "Bearer $jwtToken"
         _currentUser.value = user
+        sessionManager?.saveSession(jwtToken, user)
     }
 
     fun clearSession() {
@@ -43,6 +56,7 @@ object HomigoRepository {
         _currentUser.value = null
         _myProfile.value = null
         _profileCompletion.value = 0
+        sessionManager?.clearSession()
     }
 
     fun updateLocalProfile(profile: Profile) {

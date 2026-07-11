@@ -11,6 +11,9 @@ interface ApiService {
     @POST("auth/login")
     suspend fun login(@Body body: Map<String, String>): AuthResponse
 
+    @POST("auth/logout")
+    suspend fun logout(@Header("Authorization") token: String): OkResponse
+
     @GET("profile/me")
     suspend fun getProfile(@Header("Authorization") token: String): Profile
 

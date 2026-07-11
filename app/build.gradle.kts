@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -9,14 +11,15 @@ plugins {
 // Each collaborator sets LOCAL_BASE_URL in their own (un-tracked) local.properties
 // so that no one has to touch version-controlled files when switching IPs.
 // ---------------------------------------------------------------------------
-val localProps = java.util.Properties().apply {
+val localProps = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) load(file.inputStream())
 }
-val localBaseUrl: String = localProps.getProperty(
+val localBaseUrl = localProps.getProperty(
     "LOCAL_BASE_URL",
     "http://10.0.2.2:5001/api/"          // default: host loopback via Android emulator
 )
+
 
 android {
     namespace = "com.example.homigo"
@@ -92,6 +95,9 @@ dependencies {
 
     // Image loading
     implementation(libs.coil.compose)
+
+    // Secure Storage
+    implementation(libs.androidx.security.crypto)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -22,10 +22,12 @@ import com.example.homigo.data.repository.HomigoRepository
 import com.example.homigo.ui.screens.*
 import com.example.homigo.ui.theme.*
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        HomigoRepository.init(applicationContext)
         setContent {
             val tokenState = HomigoRepository.token.collectAsState()
             val currentUserState = HomigoRepository.currentUser.collectAsState()
@@ -43,102 +45,117 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            val snackbarHostState = remember { SnackbarHostState() }
+            val scope = rememberCoroutineScope()
+
             HomigoTheme(gender = gender, completion = completion) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    val navController = rememberNavController()
-
-                    NavHost(
-                        navController = navController,
-                        startDestination = "splash",
-                        enterTransition = {
-                            slideIntoContainer(
-                                AnimatedContentTransitionScope.SlideDirection.Left,
-                                animationSpec = tween(400)
-                            )
-                        },
-                        exitTransition = {
-                            slideOutOfContainer(
-                                AnimatedContentTransitionScope.SlideDirection.Left,
-                                animationSpec = tween(400)
-                            )
-                        },
-                        popEnterTransition = {
-                            slideIntoContainer(
-                                AnimatedContentTransitionScope.SlideDirection.Right,
-                                animationSpec = tween(400)
-                            )
-                        },
-                        popExitTransition = {
-                            slideOutOfContainer(
-                                AnimatedContentTransitionScope.SlideDirection.Right,
-                                animationSpec = tween(400)
-                            )
-                        }
+                Scaffold(
+                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+                ) { innerPadding ->
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                        color = MaterialTheme.colorScheme.background
                     ) {
-                        composable("splash") {
-                            SplashScreen(
-                                onSplashComplete = {
-                                    navController.navigate("onboarding") {
-                                        popUpTo("splash") { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
+                        val navController = rememberNavController()
 
-                        composable("onboarding") {
-                            OnboardingWizardScreen(
-                                onOnboardingComplete = {
-                                    navController.navigate("main") {
-                                        popUpTo("onboarding") { inclusive = true }
-                                    }
-                                },
-                                onNavigateToLogin = {
-                                    navController.navigate("login") {
-                                        popUpTo("onboarding") { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-
-                        composable("login") {
-                            LoginScreen(
-                                onLoginSuccess = { hasProfile ->
-                                    if (hasProfile) {
-                                        navController.navigate("main") {
-                                            popUpTo("login") { inclusive = true }
-                                        }
-                                    } else {
+                        NavHost(
+                            navController = navController,
+                            startDestination = "splash",
+                            enterTransition = {
+                                slideIntoContainer(
+                                    AnimatedContentTransitionScope.SlideDirection.Left,
+                                    animationSpec = tween(400)
+                                )
+                            },
+                            exitTransition = {
+                                slideOutOfContainer(
+                                    AnimatedContentTransitionScope.SlideDirection.Left,
+                                    animationSpec = tween(400)
+                                )
+                            },
+                            popEnterTransition = {
+                                slideIntoContainer(
+                                    AnimatedContentTransitionScope.SlideDirection.Right,
+                                    animationSpec = tween(400)
+                                )
+                            },
+                            popExitTransition = {
+                                slideOutOfContainer(
+                                    AnimatedContentTransitionScope.SlideDirection.Right,
+                                    animationSpec = tween(400)
+                                )
+                            }
+                        ) {
+                            composable("splash") {
+                                SplashScreen(
+                                    onSplashComplete = {
                                         navController.navigate("onboarding") {
-                                            popUpTo("login") { inclusive = true }
+                                            popUpTo("splash") { inclusive = true }
                                         }
                                     }
-                                },
-                                onNavigateToRegister = {
-                                    navController.navigate("onboarding")
-                                }
-                            )
-                        }
+                                )
+                            }
 
-                        composable("main") {
-                            MainTabScreen(
-                                onNavigateToChat = { otherUserId, otherUserName ->
-                                    navController.navigate("chat/$otherUserId/$otherUserName")
-                                },
-                                onNavigateToChatbot = { navController.navigate("chatbot") },
-                                onNavigateToExpenses = { navController.navigate("expenses") },
-                                onNavigateToRequests = { navController.navigate("requests") },
-                                onNavigateToReviews = { navController.navigate("reviews") },
-                                onLogout = {
-                                    HomigoRepository.clearSession()
-                                    navController.navigate("login") {
-                                        popUpTo("main") { inclusive = true }
+                            composable("onboarding") {
+                                OnboardingWizardScreen(
+                                    onOnboardingComplete = {
+                                        navController.navigate("main") {
+                                            popUpTo("onboarding") { inclusive = true }
+                                        }
+                                    },
+                                    onNavigateToLogin = {
+                                        navController.navigate("login") {
+                                            popUpTo("onboarding") { inclusive = true }
+                                        }
                                     }
-                                }
-                            )
-                        }
+                                )
+                            }
+
+                            composable("login") {
+                                LoginScreen(
+                                    onLoginSuccess = { hasProfile ->
+                                        if (hasProfile) {
+                                            navController.navigate("main") {
+                                                popUpTo("login") { inclusive = true }
+                                            }
+                                        } else {
+                                            navController.navigate("onboarding") {
+                                                popUpTo("login") { inclusive = true }
+                                            }
+                                        }
+                                    },
+                                    onNavigateToRegister = {
+                                        navController.navigate("onboarding")
+                                    }
+                                )
+                            }
+
+                            composable("main") {
+                                MainTabScreen(
+                                    onNavigateToChat = { otherUserId, otherUserName ->
+                                        navController.navigate("chat/$otherUserId/$otherUserName")
+                                    },
+                                    onNavigateToChatbot = { navController.navigate("chatbot") },
+                                    onNavigateToExpenses = { navController.navigate("expenses") },
+                                    onNavigateToRequests = { navController.navigate("requests") },
+                                    onNavigateToReviews = { navController.navigate("reviews") },
+                                    onLogout = { message ->
+                                        navController.navigate("onboarding") {
+                                            popUpTo(0) { inclusive = true }
+                                        }
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(message)
+                                        }
+                                    },
+                                    onShowSnackbar = { message ->
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(message)
+                                        }
+                                    }
+                                )
+                            }
 
                         composable("chatbot") {
                             ChatbotScreen()
@@ -171,6 +188,7 @@ class MainActivity : ComponentActivity() {
                                 onNavigateBack = { navController.popBackStack() }
                             )
                         }
+                        }
                     }
                 }
             }
@@ -198,7 +216,8 @@ fun MainTabScreen(
     onNavigateToExpenses: () -> Unit,
     onNavigateToRequests: () -> Unit,
     onNavigateToReviews: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: (String) -> Unit,
+    onShowSnackbar: (String) -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
 
@@ -249,7 +268,11 @@ fun MainTabScreen(
                     1 -> ExploreScreen()
                     2 -> AIRadarScreen()
                     3 -> ChatListScreen(onNavigateToChat = onNavigateToChat)
-                    4 -> ProfileSetupScreen(onSetupComplete = {})
+                    4 -> ProfileSetupScreen(
+                        onSetupComplete = {},
+                        onLogout = onLogout,
+                        onShowSnackbar = onShowSnackbar
+                    )
                 }
             }
         }
