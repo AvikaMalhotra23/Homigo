@@ -536,83 +536,187 @@ fun HomeScreen(
         }
 
         // ─── FLOATING CHATGPT-STYLE AI ACTIONS FAB ───
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 24.dp, bottom = 24.dp)
-        ) {
+        if (!isFabExpanded) {
             Box(
                 modifier = Modifier
-                    .shadow(12.dp, CircleShape, spotColor = activeAccent.copy(alpha = 0.4f))
-                    .background(activeAccent, CircleShape)
-                    .border(1.5.dp, Color.White, CircleShape)
-                    .size(56.dp)
-                    .clickable { isFabExpanded = true },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = "Ask Homigo AI",
-                    tint = Color.White,
-                    modifier = Modifier.size(26.dp)
-                )
-            }
-        }
-
-        // ChatGPT Prompt Overlay Panel
-        AnimatedVisibility(
-            visible = isFabExpanded,
-            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.45f))
-                    .clickable { isFabExpanded = false },
-                contentAlignment = Alignment.BottomCenter
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 24.dp, bottom = 24.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = false) {}
-                        .padding(20.dp)
+                        .shadow(12.dp, CircleShape, spotColor = activeAccent.copy(alpha = 0.4f))
+                        .background(activeAccent, CircleShape)
+                        .border(1.5.dp, Color.White, CircleShape)
+                        .size(56.dp)
+                        .clickable { isFabExpanded = true },
+                    contentAlignment = Alignment.Center
                 ) {
-                    LiquidGlassCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        density = GlassDensity.HIGH
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = "Ask Homigo AI",
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            }
+        }
+
+        // Material 3 modal bottom sheet
+        if (isFabExpanded) {
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            val lightAccentBg = if (gender.lowercase() == "female") Color(0xFFFFF1F2) else Color(0xFFF0F9FF)
+
+            ModalBottomSheet(
+                onDismissRequest = { isFabExpanded = false },
+                sheetState = sheetState,
+                dragHandle = { BottomSheetDefaults.DragHandle() },
+                containerColor = Color.White,
+                scrimColor = Color.Black.copy(alpha = 0.25f), // 20–30% black overlay
+                shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+                tonalElevation = 24.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 24.dp, vertical = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Header
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = "🤖 Ask Homigo AI",
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 16.sp,
-                            color = Graphite
-                        )
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        val prompts = listOf(
-                            "Find me a roommate" to onNavigateToDiscover,
-                            "Find rooms" to onNavigateToDiscover,
-                            "Who matches me?" to onNavigateToDiscover,
-                            "Summarize today's activity" to {},
-                            "Report issue" to onNavigateToReviews
-                        )
-
-                        prompts.forEach { (prompt, action) ->
+                        Text("🤖", fontSize = 28.sp)
+                        Column {
                             Text(
-                                text = prompt,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = activeAccent,
+                                text = "Homigo AI",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Graphite
+                            )
+                            Text(
+                                text = "Your smart roommate assistant",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = SecondaryText
+                            )
+                        }
+                    }
+
+                    // Search Field
+                    var searchText by remember { mutableStateOf("") }
+                    OutlinedTextField(
+                        value = searchText,
+                        onValueChange = { searchText = it },
+                        placeholder = { Text("Ask Homigo AI...", color = SecondaryText, fontSize = 14.sp) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Search,
+                                contentDescription = "Search icon",
+                                tint = activeAccent,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(24.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = activeAccent,
+                            unfocusedBorderColor = Border,
+                            focusedContainerColor = SurfaceVariant.copy(alpha = 0.4f),
+                            unfocusedContainerColor = SurfaceVariant.copy(alpha = 0.4f),
+                            focusedTextColor = Graphite,
+                            unfocusedTextColor = Graphite
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // suggestions list
+                    val suggestions = listOf(
+                        Triple("👥", "Find Compatible Roommates", "Find matches matching your preferences" to onNavigateToDiscover),
+                        Triple("🏠", "Find Available Rooms", "View vacant rooms in your hostel" to onNavigateToDiscover),
+                        Triple("🎯", "Who Matches Me Best?", "Get a curated list of top matches" to onNavigateToDiscover),
+                        Triple("📊", "Explain My Compatibility Score", "Details of compatibility breakdown" to {}),
+                        Triple("📝", "Improve My Profile", "Add missing info to boost visibility" to onCompleteProfileClick),
+                        Triple("🚩", "Report an Issue", "Notify support about roommate disputes" to onNavigateToReviews)
+                    )
+
+                    val filteredSuggestions = suggestions.filter { (_, title, descAndAction) ->
+                        title.contains(searchText, ignoreCase = true) ||
+                        descAndAction.first.contains(searchText, ignoreCase = true)
+                    }
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 400.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(filteredSuggestions) { (icon, title, descAndAction) ->
+                            val (desc, action) = descAndAction
+                            Card(
+                                onClick = {
+                                    isFabExpanded = false
+                                    action()
+                                },
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = lightAccentBg
+                                ),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable {
-                                        isFabExpanded = false
-                                        action()
+                                    .heightIn(min = 48.dp) // Minimum touch target is 48dp
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(Color.White, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(icon, fontSize = 20.sp)
                                     }
-                                    .padding(vertical = 12.dp)
-                            )
-                            Divider(color = Color.Black.copy(alpha = 0.05f))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = title,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp,
+                                            color = Graphite
+                                        )
+                                        Text(
+                                            text = desc,
+                                            fontSize = 11.sp,
+                                            color = SecondaryText
+                                        )
+                                    }
+                                    Icon(
+                                        imageVector = Icons.Filled.KeyboardArrowRight,
+                                        contentDescription = "Navigate to $title",
+                                        tint = activeAccent,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        if (filteredSuggestions.isEmpty()) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 24.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("No suggestions match your query.", color = SecondaryText, fontSize = 13.sp)
+                                }
+                            }
                         }
                     }
                 }
