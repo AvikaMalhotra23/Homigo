@@ -327,10 +327,13 @@ fun OnboardingWizardScreen(
                             }
                         }
                     ) { targetStep ->
+                        val scrollState = rememberScrollState()
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState()),
+                                .then(
+                                    if (targetStep == 1) Modifier else Modifier.verticalScroll(scrollState)
+                                ),
                             verticalArrangement = Arrangement.Top,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
@@ -1219,15 +1222,6 @@ private fun StepWelcome(
     onStart: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
-    val greetingText = remember {
-        val calendar = Calendar.getInstance()
-        when (calendar.get(Calendar.HOUR_OF_DAY)) {
-            in 5..11 -> "🌅 Good Morning! Ready to find your ideal roommate?"
-            in 12..16 -> "☀️ Good Afternoon! Your hostel journey starts here."
-            else -> "🌇 Good Evening! Let's help you find the right roommate."
-        }
-    }
-
     val gradientColor = if (gender == "female") Color(0xFFFFF8FB) else Color(0xFFF5FBFF)
     
     Column(
@@ -1237,49 +1231,26 @@ private fun StepWelcome(
                 Brush.verticalGradient(
                     colors = listOf(gradientColor, Color.White, Color.White),
                     startY = 0f,
-                    endY = 1200f
+                    endY = 1000f
                 )
             )
-            .padding(vertical = 32.dp, horizontal = 24.dp),
+            .padding(top = 20.dp, bottom = 12.dp, start = 20.dp, end = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Logo & Gender Selector Header
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             HomigoPremiumLogo(gender = gender)
-            
-            // Capsule badge
-            Row(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(if (gender == "female") Color(0xFFFFF1F2) else Color(0xFFEFF6FF))
-                    .padding(horizontal = 14.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "Verified",
-                    tint = if (gender == "female") Color(0xFFEC4899) else Color(0xFF2563EB),
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Trusted by Students",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (gender == "female") Color(0xFFBE185D) else Color(0xFF1D4ED8)
-                )
-            }
             
             // Gender switcher capsule
             Row(
                 modifier = Modifier
                     .clip(CircleShape)
                     .background(Color(0xFFF1F5F9))
-                    .padding(4.dp),
+                    .padding(3.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 listOf("male", "female").forEach { mode ->
@@ -1293,12 +1264,12 @@ private fun StepWelcome(
                             .clip(CircleShape)
                             .background(if (isSelected) activeBgColor else Color.Transparent)
                             .clickable { onGenderChanged(mode) }
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = text,
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = if (isSelected) activeTextColor else Color(0xFF64748B)
                         )
@@ -1311,7 +1282,8 @@ private fun StepWelcome(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(260.dp),
+                .weight(1f)
+                .heightIn(min = 120.dp, max = 220.dp),
             contentAlignment = Alignment.Center
         ) {
             androidx.compose.animation.AnimatedContent(
@@ -1332,27 +1304,18 @@ private fun StepWelcome(
         // Heading & Greeting
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
-                text = greetingText,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = if (gender == "female") Color(0xFFDB2777) else Color(0xFF2563EB),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            
-            Text(
                 text = "Find Your Perfect Roommate",
-                fontSize = 30.sp,
+                fontSize = 26.sp,
                 fontWeight = FontWeight.Black,
                 color = Color(0xFF1E293B),
                 textAlign = TextAlign.Center
             )
             
             Text(
-                text = "Connect with verified students from your university, discover compatible roommates, and start your hostel journey with confidence.",
+                text = "Connect with verified roommates at your university.",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
                 color = Color(0xFF64748B),
@@ -1364,7 +1327,7 @@ private fun StepWelcome(
         // 3 Feature Chips
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically
         ) {
             listOf(
@@ -1397,7 +1360,7 @@ private fun StepWelcome(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Get Started Button
         val buttonInteractionSource = remember { MutableInteractionSource() }
@@ -1415,10 +1378,10 @@ private fun StepWelcome(
 
         Box(
             modifier = Modifier
-                .fillMaxWidth(0.75f)
-                .height(56.dp)
+                .fillMaxWidth(0.8f)
+                .height(52.dp)
                 .graphicsLayer(scaleX = buttonScale, scaleY = buttonScale)
-                .clip(RoundedCornerShape(28.dp))
+                .clip(RoundedCornerShape(26.dp))
                 .background(Brush.horizontalGradient(buttonGradientColors))
                 .clickable(
                     interactionSource = buttonInteractionSource,
@@ -1450,71 +1413,14 @@ private fun StepWelcome(
                 onClick = onNavigateToLogin,
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = if (gender == "female") Color(0xFFEC4899) else Color(0xFF2563EB)
-                )
+                ),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Text(
                     text = "Log In",
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
-            }
-        }
-
-        // Divider & Trust Section
-        HorizontalDivider(
-            color = Color(0xFFE2E8F0),
-            thickness = 1.dp,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "Why Choose Homigo?",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E293B)
-            )
-
-            // Trust Cards
-            listOf(
-                Triple("🎓", "Verified University Students", "Only authenticated student profiles."),
-                Triple("❤️", "Compatibility Based Matching", "Find roommates based on lifestyle and preferences."),
-                Triple("🔒", "Private & Secure", "Your information is protected using secure authentication.")
-            ).forEach { (emoji, title, desc) ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, Color(0xFFF1F5F9)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(text = emoji, fontSize = 28.sp)
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = title,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1E293B)
-                            )
-                            Text(
-                                text = desc,
-                                fontSize = 12.sp,
-                                color = Color(0xFF64748B)
-                            )
-                        }
-                    }
-                }
             }
         }
     }
