@@ -201,6 +201,36 @@ object HomigoRepository {
         return api.detectFake(authToken, userId)
     }
 
+    suspend fun searchUsers(query: String): List<UserSearchResult> {
+        val authToken = _token.value ?: throw Exception("Not authenticated")
+        return api.searchUsers(authToken, query)
+    }
+
+    suspend fun getUserByUsername(username: String): Profile {
+        val authToken = _token.value ?: throw Exception("Not authenticated")
+        return api.getUserByUsername(authToken, username)
+    }
+
+    suspend fun checkUsername(username: String): UsernameAvailabilityResponse {
+        val authToken = _token.value ?: throw Exception("Not authenticated")
+        return api.checkUsername(authToken, mapOf("username" to username))
+    }
+
+    suspend fun updateUsername(username: String): OkResponse {
+        val authToken = _token.value ?: throw Exception("Not authenticated")
+        val res = api.updateUsername(authToken, mapOf("username" to username))
+        try {
+            fetchProfile()
+            val u = _currentUser.value
+            if (u != null) {
+                _currentUser.value = u.copy(username = if (username.startsWith("@")) username else "@$username")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return res
+    }
+
     fun getErrorMessage(e: Throwable): String {
         return if (e is retrofit2.HttpException) {
             try {

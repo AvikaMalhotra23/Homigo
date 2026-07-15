@@ -79,6 +79,16 @@ function createTables() {
   db.run(`ALTER TABLE profiles ADD COLUMN personality_type TEXT`, (err) => {});
   db.run(`ALTER TABLE profiles ADD COLUMN daily_routine TEXT`, (err) => {});
   db.run(`ALTER TABLE profiles ADD COLUMN work_style TEXT`, (err) => {});
+  
+  // Dynamically add columns to users table
+  db.run(`ALTER TABLE users ADD COLUMN username TEXT`, (err) => {});
+  db.run(`ALTER TABLE users ADD COLUMN displayName TEXT`, (err) => {
+    db.run(`UPDATE users SET displayName = name WHERE displayName IS NULL`);
+  });
+  db.run(`ALTER TABLE users ADD COLUMN avatar TEXT`, (err) => {});
+  db.run(`ALTER TABLE users ADD COLUMN isOnline INTEGER DEFAULT 0`, (err) => {});
+  db.run(`ALTER TABLE users ADD COLUMN lastSeen DATETIME`, (err) => {});
+  db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username) WHERE username IS NOT NULL`, (err) => {});
 
   // Roommate Requests table
   db.run(`CREATE TABLE IF NOT EXISTS requests (

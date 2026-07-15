@@ -36,8 +36,10 @@ import com.example.homigo.ui.theme.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.layout.FlowRow
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     onNavigateToChat: (Int, String) -> Unit,
@@ -55,6 +57,18 @@ fun HomeScreen(
     var chatList by remember { mutableStateOf<List<Profile>>(emptyList()) }
     var requestsResponse by remember { mutableStateOf<RequestsResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+
+    val currentUserState = HomigoRepository.currentUser.collectAsState()
+    val user = currentUserState.value
+    var promptedUsername by rememberSaveable { mutableStateOf(false) }
+    var showUsernameSetupDialog by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(user) {
+        if (user != null && user.username.isNullOrEmpty() && !promptedUsername) {
+            promptedUsername = true
+            showUsernameSetupDialog = true
+        }
+    }
 
     val coroutineScope = rememberCoroutineScope()
     var isFabExpanded by remember { mutableStateOf(false) }
@@ -721,6 +735,149 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+
+        if (showUsernameSetupDialog) {
+            var inputUsername by remember { mutableStateOf("") }
+            var availabilityMessage by remember { mutableStateOf("") }
+            var isAvailable by remember { mutableStateOf<Boolean?>(null) }
+            var suggestions by remember { mutableStateOf<List<String>>(emptyList()) }
+            var isChecking by remember { mutableStateOf(false) }
+            var isSavingUsername by remember { mutableStateOf(false) }
+
+            // Live check availability when typing
+            LaunchedEffect(inputUsername) {
+                val trimmed = inputUsername.trim()
+                if (trimmed.isEmpty()) {
+                    availabilityMessage = ""
+                    isAvailable = null
+                    suggestions = emptyList()
+                    return@LaunchedEffect
+                }
+                
+                // Validate format rules
+                val clean = if (trimmed.startsWith("@")) trimmed.substring(1) else trimmed
+                val regex = "^[a-zA-Z0-9_.]+$".toRegex()
+                if (!regex.matches(clean)) {
+                    availabilityMessage = "Only letters, numbers, underscores, and dots allowed."
+                    isAvailable = false
+                    suggestions = emptyList()
+                    return@LaunchedEffect
+                }
+                
+                if (clean.length < 1 || clean.length > 30) {
+                    availabilityMessage = "Must be between 1 and 30 characters."
+                    isAvailable = false
+                    suggestions = emptyList()
+                    return@LaunchedEffect
+                }
+
+                isChecking = true
+                try {
+                    val checkRes = HomigoRepository.checkUsername(clean)
+                    isAvailable = checkRes.available
+                    if (checkRes.available) {
+                        availabilityMessage = "✓ @$clean is available"
+                    } else {
+                        availabilityMessage = "✗ Username isn't available."
+                        suggestions = checkRes.suggestions
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    isChecking = false
+                }
+            }
+
+            AlertDialog(
+                onDismissRequest = { if (!isSavingUsername) showUsernameSetupDialog = false },
+                title = { Text("Choose a Username", fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Every user needs a unique username to be discovered by others on Homigo.",
+                            fontSize = 14.sp,
+                            color = SecondaryText
+                        )
+
+                        OutlinedTextField(
+                            value = inputUsername,
+                            onValueChange = { inputUsername = it },
+                            label = { Text("Username") },
+                            placeholder = { Text("e.g. harshit_garg") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = isAvailable == false
+                        )
+
+                        if (isChecking) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp).align(Alignment.CenterHorizontally))
+                        } else if (availabilityMessage.isNotEmpty()) {
+                            Text(
+                                text = availabilityMessage,
+                                color = if (isAvailable == true) Color(0xFF22C55E) else MaterialTheme.colorScheme.error,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        if (suggestions.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("Suggestions:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Graphite)
+                            
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                suggestions.forEach { sug ->
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+                                            .clickable { inputUsername = sug }
+                                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                                    ) {
+                                        Text(sug, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            isSavingUsername = true
+                            coroutineScope.launch {
+                                try {
+                                    val clean = if (inputUsername.startsWith("@")) inputUsername.substring(1) else inputUsername
+                                    HomigoRepository.updateUsername(clean)
+                                    showUsernameSetupDialog = false
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                } finally {
+                                    isSavingUsername = false
+                                }
+                            }
+                        },
+                        enabled = isAvailable == true && !isSavingUsername
+                    ) {
+                        Text("Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showUsernameSetupDialog = false },
+                        enabled = !isSavingUsername
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }

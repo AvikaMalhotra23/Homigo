@@ -7,6 +7,7 @@ const { COLLEGES } = require('../config/colleges');
 
 router.get('/me', requireAuth, profileController.getMe);
 router.post('/update', requireAuth, profileController.updateProfile);
+router.put('/username', requireAuth, profileController.updateUsername);
 router.post('/verify', requireAuth, profileController.uploadIdProof);
 router.get('/colleges', (req, res) => {
   res.json(COLLEGES);

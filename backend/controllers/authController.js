@@ -37,7 +37,10 @@ exports.register = async (req, res) => {
         id: result.id,
         name,
         email,
-        gender: gender.toLowerCase()
+        gender: gender.toLowerCase(),
+        username: null,
+        displayName: name,
+        avatar: null
       }
     });
   } catch (err) {
@@ -83,7 +86,10 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         gender: user.gender,
-        hasProfile: !!profile
+        hasProfile: !!profile,
+        username: user.username ? `@${user.username}` : null,
+        displayName: user.displayName || user.name,
+        avatar: user.avatar
       }
     });
   } catch (err) {

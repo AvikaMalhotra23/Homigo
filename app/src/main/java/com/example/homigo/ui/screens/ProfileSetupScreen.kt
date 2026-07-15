@@ -12,6 +12,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
+import com.example.homigo.ui.theme.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -62,7 +70,7 @@ private val defaultColleges = listOf(
     )
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ProfileSetupScreen(
     initialCollege: String? = null,
@@ -170,6 +178,21 @@ fun ProfileSetupScreen(
     var successMessage by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
 
+    var userDisplayName by remember { mutableStateOf("") }
+    var userUsername by remember { mutableStateOf("") }
+    var showUsernameSetupDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(user) {
+        user?.let { u ->
+            if (userDisplayName.isEmpty()) {
+                userDisplayName = u.displayName ?: u.name
+            }
+            if (userUsername.isEmpty()) {
+                userUsername = u.username ?: ""
+            }
+        }
+    }
+
     // Pre-populate if profile already exists
     LaunchedEffect(currentProfile, collegesList) {
         currentProfile?.let { prof ->
@@ -193,8 +216,12 @@ fun ProfileSetupScreen(
             guests = prof.guests
             bio = prof.bio ?: ""
             isVerified = prof.is_verified == 1
+            userDisplayName = prof.displayName ?: user?.displayName ?: user?.name ?: ""
+            userUsername = prof.username ?: user?.username ?: ""
         }
     }
+
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
         topBar = {
@@ -215,6 +242,201 @@ fun ProfileSetupScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            
+            // Instagram-Style Profile Header Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    // Profile Photo / Avatar
+                    Box(contentAlignment = Alignment.Center) {
+                        Surface(
+                            modifier = Modifier.size(90.dp),
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                            border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = if (isFemale) "👩" else "👨",
+                                    fontSize = 44.sp
+                                )
+                            }
+                        }
+                        if (isVerified) {
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White)
+                                    .align(Alignment.BottomEnd)
+                                    .padding(2.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Verified Status",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Display Name & Username
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = if (userDisplayName.isNotBlank()) userDisplayName else (user?.name ?: "Anonymous Student"),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Graphite
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = if (userUsername.isNotBlank()) userUsername else "@username_not_set",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    // College & Hostel
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = college,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Graphite.copy(alpha = 0.8f),
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = if (hostel.isNotEmpty()) "$hostel Hostel" else "No Hostel Selected",
+                            fontSize = 12.sp,
+                            color = SecondaryText,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    // Username Setup Banner if missing
+                    if (userUsername.isBlank()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.error.copy(alpha = 0.08f))
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "⚠️ Username not set. Add one to show up in search.",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.error,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextButton(
+                                onClick = { showUsernameSetupDialog = true },
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text("Add", fontSize = 11.sp, fontWeight = FontWeight.Black)
+                            }
+                        }
+                    } else {
+                        // Display editable username edit button
+                        TextButton(onClick = { showUsernameSetupDialog = true }) {
+                            Text("Edit Username", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    HorizontalDivider(color = Color.Black.copy(alpha = 0.06f), modifier = Modifier.padding(vertical = 4.dp))
+
+                    // Action buttons: Copy, Share, QR code (disabled)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                if (userUsername.isNotBlank()) {
+                                    val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                    val clip = android.content.ClipData.newPlainText("username", userUsername)
+                                    clipboard.setPrimaryClip(clip)
+                                    onShowSnackbar("Username copied: $userUsername")
+                                } else {
+                                    onShowSnackbar("Set username first")
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(1.dp, Color.Black.copy(alpha = 0.08f))
+                        ) {
+                            Text("Copy", fontSize = 12.sp, color = Graphite)
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                if (userUsername.isNotBlank()) {
+                                    val cleanUsername = if (userUsername.startsWith("@")) userUsername.substring(1) else userUsername
+                                    val shareLink = "https://homigo.app/u/$cleanUsername"
+                                    val sendIntent = android.content.Intent().apply {
+                                        action = android.content.Intent.ACTION_SEND
+                                        putExtra(android.content.Intent.EXTRA_TEXT, "Connect with me on Homigo: $shareLink")
+                                        type = "text/plain"
+                                    }
+                                    val shareIntent = android.content.Intent.createChooser(sendIntent, null)
+                                    context.startActivity(shareIntent)
+                                } else {
+                                    onShowSnackbar("Set username first")
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(1.dp, Color.Black.copy(alpha = 0.08f))
+                        ) {
+                            Text("Share Link", fontSize = 12.sp, color = Graphite)
+                        }
+
+                        OutlinedButton(
+                            onClick = {},
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(1.dp, Color.Black.copy(alpha = 0.08f)),
+                            enabled = false
+                        ) {
+                            Text("QR Code", fontSize = 12.sp, color = Graphite.copy(alpha = 0.5f))
+                        }
+                    }
+                }
+            }
+
+            // Personal identity details (Display Name)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Display Name Info", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    OutlinedTextField(
+                        value = userDisplayName,
+                        onValueChange = { userDisplayName = it },
+                        label = { Text("Display Name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
             
             // College & Hostel Details
             Card(modifier = Modifier.fillMaxWidth()) {
@@ -504,7 +726,8 @@ fun ProfileSetupScreen(
                                 "cleanliness" to cleanliness,
                                 "pets" to pets,
                                 "guests" to guests,
-                                "bio" to bio
+                                "bio" to bio,
+                                "displayName" to userDisplayName
                             )
                             HomigoRepository.updateProfile(map)
                             isLoading = false
@@ -663,6 +886,151 @@ fun ProfileSetupScreen(
                 },
                 containerColor = MaterialTheme.colorScheme.surface,
                 tonalElevation = 6.dp
+            )
+        }
+
+        if (showUsernameSetupDialog) {
+            var inputUsername by remember { mutableStateOf("") }
+            var availabilityMessage by remember { mutableStateOf("") }
+            var isAvailable by remember { mutableStateOf<Boolean?>(null) }
+            var suggestions by remember { mutableStateOf<List<String>>(emptyList()) }
+            var isChecking by remember { mutableStateOf(false) }
+            var isSavingUsername by remember { mutableStateOf(false) }
+
+            // Live check availability when typing
+            LaunchedEffect(inputUsername) {
+                val trimmed = inputUsername.trim()
+                if (trimmed.isEmpty()) {
+                    availabilityMessage = ""
+                    isAvailable = null
+                    suggestions = emptyList()
+                    return@LaunchedEffect
+                }
+                
+                // Validate format rules
+                val clean = if (trimmed.startsWith("@")) trimmed.substring(1) else trimmed
+                val regex = "^[a-zA-Z0-9_.]+$".toRegex()
+                if (!regex.matches(clean)) {
+                    availabilityMessage = "Only letters, numbers, underscores, and dots allowed."
+                    isAvailable = false
+                    suggestions = emptyList()
+                    return@LaunchedEffect
+                }
+                
+                if (clean.length < 1 || clean.length > 30) {
+                    availabilityMessage = "Must be between 1 and 30 characters."
+                    isAvailable = false
+                    suggestions = emptyList()
+                    return@LaunchedEffect
+                }
+
+                isChecking = true
+                try {
+                    val checkRes = HomigoRepository.checkUsername(clean)
+                    isAvailable = checkRes.available
+                    if (checkRes.available) {
+                        availabilityMessage = "✓ @$clean is available"
+                    } else {
+                        availabilityMessage = "✗ Username isn't available."
+                        suggestions = checkRes.suggestions
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    isChecking = false
+                }
+            }
+
+            AlertDialog(
+                onDismissRequest = { if (!isSavingUsername) showUsernameSetupDialog = false },
+                title = { Text("Choose a Username", fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Every user needs a unique username to be discovered by others on Homigo.",
+                            fontSize = 14.sp,
+                            color = SecondaryText
+                        )
+
+                        OutlinedTextField(
+                            value = inputUsername,
+                            onValueChange = { inputUsername = it },
+                            label = { Text("Username") },
+                            placeholder = { Text("e.g. harshit_garg") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = isAvailable == false
+                        )
+
+                        if (isChecking) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp).align(Alignment.CenterHorizontally))
+                        } else if (availabilityMessage.isNotEmpty()) {
+                            Text(
+                                text = availabilityMessage,
+                                color = if (isAvailable == true) Color(0xFF22C55E) else MaterialTheme.colorScheme.error,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        if (suggestions.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("Suggestions:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Graphite)
+                            
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                suggestions.forEach { sug ->
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+                                            .clickable { inputUsername = sug }
+                                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                                    ) {
+                                        Text(sug, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            isSavingUsername = true
+                            coroutineScope.launch {
+                                try {
+                                    val clean = if (inputUsername.startsWith("@")) inputUsername.substring(1) else inputUsername
+                                    HomigoRepository.updateUsername(clean)
+                                    userUsername = "@$clean"
+                                    showUsernameSetupDialog = false
+                                    onShowSnackbar("Username updated successfully!")
+                                } catch (e: Exception) {
+                                    onShowSnackbar(e.message ?: "Failed to update username")
+                                } finally {
+                                    isSavingUsername = false
+                                }
+                            }
+                        },
+                        enabled = isAvailable == true && !isSavingUsername
+                    ) {
+                        Text("Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showUsernameSetupDialog = false },
+                        enabled = !isSavingUsername
+                    ) {
+                        Text("Cancel")
+                    }
+                }
             )
         }
     }

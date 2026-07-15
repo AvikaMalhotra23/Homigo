@@ -5,7 +5,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 exports.getMe = async (req, res) => {
   try {
     const profile = await dbHelper.get(
-      `SELECT p.*, u.name, u.email, u.gender 
+      `SELECT p.*, u.name, u.email, u.gender, u.username, u.displayName, u.avatar 
        FROM profiles p 
        JOIN users u ON p.user_id = u.id 
        WHERE p.user_id = ?`,
@@ -14,11 +14,17 @@ exports.getMe = async (req, res) => {
 
     if (!profile) {
       // Return user details with empty profile
-      const user = await dbHelper.get("SELECT name, email, gender FROM users WHERE id = ?", [req.user.id]);
+      const user = await dbHelper.get("SELECT name, email, gender, username, displayName, avatar FROM users WHERE id = ?", [req.user.id]);
       if (!user) return res.status(404).json({ error: 'User not found' });
+      if (user.username) {
+        user.username = `@${user.username}`;
+      }
       return res.status(200).json({ userOnly: true, user });
     }
 
+    if (profile.username) {
+      profile.username = `@${profile.username}`;
+    }
     res.json(profile);
   } catch (err) {
     console.error('[profileController.getMe ERROR]', err);
@@ -36,7 +42,8 @@ exports.updateProfile = async (req, res) => {
     looking_for, preferred_hostel, current_hostel, room_number, move_in_date, interests, languages, hometown,
     budget_min, budget_max, sleep_schedule, smoking, drinking, food_preference, cleanliness, pets, guests, bio,
     deal_breakers, room_purpose,
-    wake_up_time, study_style, room_environment, personality_type, daily_routine, work_style
+    wake_up_time, study_style, room_environment, personality_type, daily_routine, work_style,
+    displayName, avatar
   } = req.body;
 
   // Use defaults for any missing fields so partial profiles save without 400 errors
@@ -58,6 +65,24 @@ exports.updateProfile = async (req, res) => {
   if (!req.body.id_proof_url) riskScore += 0.3;          // Missing ID verification
 
   try {
+    // Update users table fields if provided
+    if (displayName !== undefined || avatar !== undefined) {
+      const updates = [];
+      const params = [];
+      if (displayName !== undefined) {
+        updates.push("displayName = ?");
+        params.push(displayName);
+      }
+      if (avatar !== undefined) {
+        updates.push("avatar = ?");
+        params.push(avatar);
+      }
+      if (updates.length > 0) {
+        params.push(userId);
+        await dbHelper.run(`UPDATE users SET ${updates.join(", ")} WHERE id = ?`, params);
+      }
+    }
+
     const existing = await dbHelper.get("SELECT user_id FROM profiles WHERE user_id = ?", [userId]);
     
     const interestsStr = typeof interests === 'string' ? interests : JSON.stringify(interests || []);
@@ -144,5 +169,48 @@ exports.uploadIdProof = async (req, res) => {
       error: isProduction ? 'Database error' : `Database error: ${err.message}`, 
       stack: isProduction ? undefined : err.stack 
     });
+  }
+};
+
+exports.updateUsername = async (req, res) => {
+  const userId = req.user.id;
+  let { username } = req.body;
+
+  if (!username) {
+    return res.status(400).json({ error: 'Username is required' });
+  }
+
+  let clean = username.trim().toLowerCase();
+  if (clean.startsWith('@')) {
+    clean = clean.substring(1);
+  }
+
+  // Format validation
+  if (clean.length < 1 || clean.length > 30) {
+    return res.status(400).json({ error: 'Username must be between 1 and 30 characters' });
+  }
+
+  const regex = /^[a-z0-9_.]+$/;
+  if (!regex.test(clean)) {
+    return res.status(400).json({ error: 'Username can only contain letters, numbers, underscores, and dots' });
+  }
+
+  const reserved = ['admin', 'support', 'homigo', 'ai', 'system'];
+  if (reserved.includes(clean)) {
+    return res.status(400).json({ error: 'This username is reserved' });
+  }
+
+  try {
+    // Check if username is already taken by another user
+    const existing = await dbHelper.get("SELECT id FROM users WHERE username = ? AND id != ?", [clean, userId]);
+    if (existing) {
+      return res.status(400).json({ error: 'Username is already taken' });
+    }
+
+    await dbHelper.run("UPDATE users SET username = ? WHERE id = ?", [clean, userId]);
+    res.json({ ok: true, message: 'Username updated successfully' });
+  } catch (err) {
+    console.error('[profileController.updateUsername ERROR]', err);
+    res.status(500).json({ error: 'Database error updating username' });
   }
 };

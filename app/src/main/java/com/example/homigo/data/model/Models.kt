@@ -5,7 +5,12 @@ data class User(
     val name: String,
     val email: String,
     val gender: String,
-    val hasProfile: Boolean = false
+    val hasProfile: Boolean = false,
+    val username: String? = null,
+    val displayName: String? = null,
+    val avatar: String? = null,
+    val isOnline: Int = 0,
+    val lastSeen: String? = null
 )
 
 data class AuthResponse(
@@ -48,7 +53,40 @@ data class Profile(
     val bio: String?,
     val is_verified: Int,
     val id_proof_url: String?,
-    val fake_risk_score: Double
+    val fake_risk_score: Double,
+    val username: String? = null,
+    val displayName: String? = null,
+    val avatar: String? = null
+)
+
+data class UsernameAvailabilityResponse(
+    val available: Boolean,
+    val suggestions: List<String> = emptyList()
+)
+
+data class SearchResultProfile(
+    val college: String,
+    val hostel: String,
+    val course: String?,
+    val branch: String?,
+    val year: String?,
+    val is_verified: Int
+)
+
+data class UserSearchResult(
+    val id: Int,
+    val username: String?,
+    val displayName: String?,
+    val name: String?,
+    val avatar: String?,
+    val email: String?,
+    val gender: String?,
+    val isOnline: Int,
+    val lastSeen: String?,
+    val requestStatus: String,
+    val requestSender: Int?,
+    val profile: SearchResultProfile?,
+    val compatibilityScore: Int
 )
 
 data class MatchBreakdown(

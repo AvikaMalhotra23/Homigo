@@ -134,4 +134,29 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body body: @JvmSuppressWildcards Map<String, Any>
     ): OkResponse
+
+    // ========== USERNAMES & USER SEARCH ==========
+    @GET("users/search")
+    suspend fun searchUsers(
+        @Header("Authorization") token: String,
+        @Query("q") query: String
+    ): List<UserSearchResult>
+
+    @GET("users/username/{username}")
+    suspend fun getUserByUsername(
+        @Header("Authorization") token: String,
+        @Path("username") username: String
+    ): Profile
+
+    @POST("users/check-username")
+    suspend fun checkUsername(
+        @Header("Authorization") token: String,
+        @Body body: Map<String, String>
+    ): UsernameAvailabilityResponse
+
+    @PUT("profile/username")
+    suspend fun updateUsername(
+        @Header("Authorization") token: String,
+        @Body body: Map<String, String>
+    ): OkResponse
 }
