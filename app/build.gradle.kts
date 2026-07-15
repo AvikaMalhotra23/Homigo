@@ -51,7 +51,7 @@ android {
                 "proguard-rules.pro"
             )
             // Production / tunnel URL – update this when your prod backend changes
-            buildConfigField("String", "BASE_URL", "\"https://150f4840630e20.lhr.life/api/\"")
+            buildConfigField("String", "BASE_URL", "\"https://9f05570759605a.lhr.life/api/\"")
         }
     }
     compileOptions {
