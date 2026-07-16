@@ -1,6 +1,8 @@
 package com.example.homigo.ui.screens
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -25,6 +27,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.material.ripple.rememberRipple
 import com.example.homigo.ui.theme.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -175,6 +179,7 @@ fun ProfileSetupScreen(
     // AI Bio Generator state
     var aiBioPrompt by remember { mutableStateOf("") }
     var isGeneratingBio by remember { mutableStateOf(false) }
+    var showAiBioGeneratorDialog by remember { mutableStateOf(false) }
 
     // Verification state
     var isVerified by remember { mutableStateOf(false) }
@@ -612,49 +617,30 @@ fun ProfileSetupScreen(
                 }
             }
 
-            // AI Bio Generator & Bio
+            // Biography
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Biography & AI Bio Generator", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-
-                    OutlinedTextField(
-                        value = aiBioPrompt,
-                        onValueChange = { aiBioPrompt = it },
-                        label = { Text("Enter a brief description for AI Bio (e.g. I am a quiet tech student who reads books)") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Button(
-                        onClick = {
-                            if (aiBioPrompt.isBlank()) return@Button
-                            isGeneratingBio = true
-                            coroutineScope.launch {
-                                try {
-                                    val res = HomigoRepository.generateBio(aiBioPrompt)
-                                    bio = res.bio
-                                    isGeneratingBio = false
-                                } catch (e: Exception) {
-                                    isGeneratingBio = false
-                                    errorMessage = "AI generation failed: " + HomigoRepository.getErrorMessage(e)
-                                }
-                            }
-                        },
-                        modifier = Modifier.align(Alignment.End),
-                        enabled = !isGeneratingBio && aiBioPrompt.isNotBlank()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (isGeneratingBio) {
-                            CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(18.dp))
-                        } else {
-                            Text("Generate AI Bio")
-                        }
+                        Text("Biography", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(
+                            text = "✨ AI Generator",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.clickable {
+                                showAiBioGeneratorDialog = true
+                            }
+                        )
                     }
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
                     OutlinedTextField(
                         value = bio,
                         onValueChange = { bio = it },
-                        label = { Text("Roommate Bio") },
+                        label = { Text("Write a short intro about yourself or tap the Sparkle icon in the header to generate one using AI") },
                         minLines = 3,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -1038,85 +1024,86 @@ fun ProfileSetupScreen(
             )
         }
 
-        // 2. Floating VisionOS Liquid Glass Header
+        // 2. Floating Apple VisionOS Liquid Glass Header (Occupies top 25-30% of screen)
+        val headerShape = RoundedCornerShape(bottomStart = 38.dp, bottomEnd = 38.dp)
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .height(250.dp)
                 .shadow(
-                    elevation = 12.dp,
-                    shape = RoundedCornerShape(26.dp),
+                    elevation = 16.dp,
+                    shape = headerShape,
                     clip = false,
-                    ambientColor = Color(0xFFF472B6).copy(alpha = 0.25f),
-                    spotColor = Color(0xFF8B5CF6).copy(alpha = 0.25f)
+                    ambientColor = Color(0xFF8B5CF6).copy(alpha = 0.3f),
+                    spotColor = Color(0xFFEC4899).copy(alpha = 0.3f)
                 )
         ) {
-            // Mesh Gradient with Pink, Lavender, Coral, Peach
+            // Mesh Gradient with Pink, Purple, Peach, Light Blue
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .clip(RoundedCornerShape(26.dp))
+                    .clip(headerShape)
                     .background(
                         Brush.linearGradient(
                             colors = listOf(
-                                Color(0xFFF472B6), // Pink
-                                Color(0xFFC084FC), // Lavender
-                                Color(0xFFFDBA74), // Coral/Peach
-                                Color(0xFFFECACA)  // Light Peach
+                                Color(0xFFEC4899), // Pink
+                                Color(0xFF8B5CF6), // Purple
+                                Color(0xFFFDBA74), // Peach
+                                Color(0xFF38BDF8)  // Light Blue
                             )
                         )
                     )
             ) {
-                // Soft glowing light blobs behind the glass
+                // Layered soft glowing ambient blobs behind the glass
                 Box(
                     modifier = Modifier
-                        .size(140.dp)
+                        .size(180.dp)
                         .align(Alignment.TopStart)
-                        .offset(x = (-30).dp, y = (-20).dp)
+                        .offset(x = (-40).dp, y = (-30).dp)
                         .background(
                             Brush.radialGradient(
-                                colors = listOf(Color.White.copy(alpha = 0.4f), Color.Transparent),
-                                radius = 250f
+                                colors = listOf(Color.White.copy(alpha = 0.35f), Color.Transparent),
+                                radius = 280f
                             )
                         )
                 )
                 Box(
                     modifier = Modifier
-                        .size(160.dp)
+                        .size(200.dp)
                         .align(Alignment.BottomEnd)
-                        .offset(x = 20.dp, y = 30.dp)
+                        .offset(x = 30.dp, y = 40.dp)
                         .background(
                             Brush.radialGradient(
-                                colors = listOf(Color(0xFFFF80B5).copy(alpha = 0.4f), Color.Transparent),
-                                radius = 300f
+                                colors = listOf(Color(0xFF38BDF8).copy(alpha = 0.35f), Color.Transparent),
+                                radius = 320f
                             )
                         )
                 )
             }
 
-            // Translucent Frosted Glass container overlay (14% frosted white, thin glossy border)
+            // Frosted White Glass layer (14% frosted white, thin specular border)
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .clip(RoundedCornerShape(26.dp))
+                    .clip(headerShape)
                     .background(Color.White.copy(alpha = 0.14f))
                     .border(
                         width = 1.dp,
                         brush = Brush.verticalGradient(
-                            listOf(Color.White.copy(alpha = 0.45f), Color.White.copy(alpha = 0.15f))
+                            listOf(Color.White.copy(alpha = 0.3f), Color.White.copy(alpha = 0.05f))
                         ),
-                        shape = RoundedCornerShape(26.dp)
+                        shape = headerShape
                     )
             )
 
-            // Animated light reflection gloss swipe
-            val transition = rememberInfiniteTransition(label = "glossSheen")
+            // Animated light reflection gloss shimmer
+            val transition = rememberInfiniteTransition(label = "glassShimmer")
             val sheenOffset by transition.animateFloat(
-                initialValue = -600f,
-                targetValue = 1200f,
+                initialValue = -800f,
+                targetValue = 1400f,
                 animationSpec = infiniteRepeatable(
-                    animation = tween(durationMillis = 5000, easing = LinearEasing),
+                    animation = tween(durationMillis = 6000, easing = LinearEasing),
                     repeatMode = RepeatMode.Restart
                 ),
                 label = "sheenOffset"
@@ -1125,17 +1112,17 @@ fun ProfileSetupScreen(
             Canvas(
                 modifier = Modifier
                     .matchParentSize()
-                    .clip(RoundedCornerShape(26.dp))
+                    .clip(headerShape)
             ) {
                 drawRect(
                     brush = Brush.linearGradient(
                         colors = listOf(
                             Color.Transparent,
-                            Color.White.copy(alpha = 0.2f),
+                            Color.White.copy(alpha = 0.18f),
                             Color.Transparent
                         ),
                         start = Offset(sheenOffset, 0f),
-                        end = Offset(sheenOffset + 250f, size.height)
+                        end = Offset(sheenOffset + 300f, size.height)
                     )
                 )
             }
@@ -1143,14 +1130,15 @@ fun ProfileSetupScreen(
             // Header Content
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(horizontal = 24.dp, vertical = 22.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Top
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
@@ -1161,65 +1149,178 @@ fun ProfileSetupScreen(
                             letterSpacing = (-0.5).sp
                         )
                         Spacer(modifier = Modifier.height(2.dp))
-                        
-                        // Calculate step dynamically based on completion (e.g. 10 stages)
-                        val stepIndex = ((completion / 10) + 1).coerceIn(1, 10)
                         Text(
-                            text = "Step $stepIndex of 10 • Build your roommate profile",
-                            fontSize = 12.5.sp,
+                            text = "Step 10 of 10 • Build your roommate profile",
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White.copy(alpha = 0.9f)
+                            color = Color.White.copy(alpha = 0.8f)
                         )
                     }
 
-                    // Floating Glass sparkles icon button
+                    // Floating Glass Sparkles Button with Scale and Ripple
+                    val interactionSource = remember { MutableInteractionSource() }
+                    val isPressed by interactionSource.collectIsPressedAsState()
+                    val buttonScale by animateFloatAsState(
+                        targetValue = if (isPressed) 0.88f else 1.0f,
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+                        label = "buttonScale"
+                    )
+
                     Box(
                         modifier = Modifier
-                            .size(42.dp)
+                            .graphicsLayer {
+                                scaleX = buttonScale
+                                scaleY = buttonScale
+                            }
+                            .size(46.dp)
                             .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.25f))
-                            .border(1.dp, Color.White.copy(alpha = 0.5f), CircleShape)
-                            .clickable {
-                                // optional interaction
-                            },
+                            .background(Color.White.copy(alpha = 0.22f))
+                            .border(1.dp, Color.White.copy(alpha = 0.4f), CircleShape)
+                            .shadow(
+                                elevation = 6.dp,
+                                shape = CircleShape,
+                                clip = false,
+                                ambientColor = Color.White.copy(alpha = 0.15f),
+                                spotColor = Color.White.copy(alpha = 0.15f)
+                            )
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = rememberRipple(bounded = true, color = Color.White),
+                                onClick = {
+                                    showAiBioGeneratorDialog = true
+                                }
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("✨", fontSize = 18.sp)
+                        Text("✨", fontSize = 20.sp)
                     }
                 }
 
-                // Premium capsule progress bar indicator
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color.White.copy(alpha = 0.25f))
+                // Premium capsule progress indicator with glass background and glowing gradient fill
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "COMPLETION SCORE",
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White.copy(alpha = 0.7f),
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = "$completion%",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White
+                        )
+                    }
+
                     Box(
                         modifier = Modifier
-                            .fillMaxHeight()
-                            .fillMaxWidth((completion / 100f).coerceIn(0.05f, 1f))
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(
-                                        Color(0xFFEC4899), // Hot Pink
-                                        Color(0xFF8B5CF6), // Purple
-                                        Color(0xFF3B82F6)  // Blue
+                            .fillMaxWidth()
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(Color.White.copy(alpha = 0.15f))
+                            .border(0.5.dp, Color.White.copy(alpha = 0.25f), RoundedCornerShape(5.dp))
+                    ) {
+                        val animatedProgress by animateFloatAsState(
+                            targetValue = completion / 100f,
+                            animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
+                            label = "progressTransition"
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth(animatedProgress.coerceIn(0.05f, 1f))
+                                .clip(RoundedCornerShape(5.dp))
+                                .background(
+                                    Brush.horizontalGradient(
+                                        listOf(
+                                            Color(0xFFEC4899), // Hot Pink
+                                            Color(0xFF8B5CF6), // Purple
+                                            Color(0xFF3B82F6)  // Blue
+                                        )
                                     )
                                 )
-                            )
-                            .shadow(
-                                elevation = 4.dp,
-                                shape = RoundedCornerShape(4.dp),
-                                clip = false,
-                                ambientColor = Color(0xFFEC4899),
-                                spotColor = Color(0xFF8B5CF6)
-                            )
-                    )
+                                .shadow(
+                                    elevation = 6.dp,
+                                    shape = RoundedCornerShape(5.dp),
+                                    clip = false,
+                                    ambientColor = Color(0xFFEC4899),
+                                    spotColor = Color(0xFF8B5CF6)
+                                )
+                        )
+                    }
                 }
             }
         }
+    }
+
+    if (showAiBioGeneratorDialog) {
+        AlertDialog(
+            onDismissRequest = { showAiBioGeneratorDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("🤖", fontSize = 24.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("AI Biography Generator", fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Tell the AI a little about yourself (e.g. your interests, study schedule, or hobbies), and it will write a custom bio for you.",
+                        fontSize = 13.sp,
+                        color = Color.Gray
+                    )
+                    OutlinedTextField(
+                        value = aiBioPrompt,
+                        onValueChange = { aiBioPrompt = it },
+                        label = { Text("What describes you best?") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (aiBioPrompt.isNotBlank()) {
+                            isGeneratingBio = true
+                            coroutineScope.launch {
+                                try {
+                                    val res = HomigoRepository.generateBio(aiBioPrompt)
+                                    bio = res.bio
+                                    showAiBioGeneratorDialog = false
+                                    onShowSnackbar("AI Bio generated successfully!")
+                                } catch (e: Exception) {
+                                    onShowSnackbar(e.message ?: "Failed to generate AI Bio")
+                                } finally {
+                                    isGeneratingBio = false
+                                }
+                            }
+                        }
+                    },
+                    enabled = aiBioPrompt.isNotBlank() && !isGeneratingBio
+                ) {
+                    if (isGeneratingBio) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
+                    } else {
+                        Text("Generate")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAiBioGeneratorDialog = false }, enabled = !isGeneratingBio) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
