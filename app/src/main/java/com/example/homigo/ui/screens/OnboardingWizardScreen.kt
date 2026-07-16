@@ -250,202 +250,239 @@ fun OnboardingWizardScreen(
         }
     }
 
-    // Keep theme as neutral general blue (male) during steps 1 to 10 (except step 1 which is our landing page where the user can toggle editions!). Only on step 11 we apply the selected gender's theme!
-    val currentThemeGender = if (currentStep == 1) gender else if (currentStep < 11) "male" else gender
-    val pastelBackgroundColor = if (currentStep == 1) Color.White else Color(0xFFF8FAFC)
+    // Keep theme as neutral general blue (male) during steps 1 to 9 (except step 1 which is our landing page where the user can toggle editions!). Only on step 10 we apply the selected gender's theme!
+    val currentThemeGender = if (currentStep == 1) gender else if (currentStep < 10) "male" else gender
     val cardSelectedColor = Color(0xFFC8E6C9)
 
     HomigoTheme(gender = currentThemeGender) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = pastelBackgroundColor
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(if (currentStep == 1) 0.dp else 24.dp)
+        LiquidGlassBackground(currentStep = currentStep) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = if (currentStep == 1) Color.White else Color.Transparent
             ) {
-                // Top Progress indicator
-                if (currentStep > 1) {
-                    val animatedProgress by animateFloatAsState(
-                        targetValue = currentStep / 11f,
-                        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
-                        label = "progressAnimation"
-                    )
-                    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(if (currentStep == 1) 0.dp else 24.dp)
+                ) {
+                    // Top Progress indicator
+                    if (currentStep > 1) {
+                        val animatedProgress by animateFloatAsState(
+                            targetValue = currentStep / 10f,
+                            animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+                            label = "progressAnimation"
+                        )
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(onClick = {
-                                if (currentStep > 1) {
-                                    if (currentStep == 6 && isAlreadyLoggedIn) {
-                                        currentStep = 4
-                                    } else {
-                                        currentStep--
-                                    }
-                                }
-                            }) {
-                                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
-                            }
-                            Text(
-                                text = "Step $currentStep of 11",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                color = Color(0xFF2563EB)
-                            )
-                            Box(modifier = Modifier.size(48.dp)) // Spacer
-                        }
-                        LinearProgressIndicator(
-                            progress = animatedProgress,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(4.dp)),
-                            color = Color(0xFF2563EB),
-                            trackColor = Color(0xFF2563EB).copy(alpha = 0.1f)
-                        )
-                    }
-                }
-
-                // Main screen transitions container
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                ) {
-                    AnimatedContent(
-                        targetState = currentStep,
-                        transitionSpec = {
-                            if (targetState > initialState) {
-                                slideInHorizontally(animationSpec = tween(400)) { width -> width } + fadeIn() with
-                                        slideOutHorizontally(animationSpec = tween(400)) { width -> -width } + fadeOut()
-                            } else {
-                                slideInHorizontally(animationSpec = tween(400)) { width -> -width } + fadeIn() with
-                                        slideOutHorizontally(animationSpec = tween(400)) { width -> width } + fadeOut()
-                            }
-                        }
-                    ) { targetStep ->
-                        val scrollState = rememberScrollState()
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .then(
-                                    if (targetStep == 1) Modifier else Modifier.verticalScroll(scrollState)
-                                ),
-                            verticalArrangement = Arrangement.Top,
-                            horizontalAlignment = Alignment.CenterHorizontally
+                                .padding(bottom = 20.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            when (targetStep) {
-                                1 -> StepWelcome(
-                                    gender = gender,
-                                    onGenderChanged = { gender = it },
-                                    onStart = { currentStep = 2 },
-                                    onNavigateToLogin = onNavigateToLogin
-                                )
-                                2 -> StepGenderSelection(gender = gender, onGenderChanged = { gender = it }, onNext = { currentStep = 3 })
-                                3 -> StepCollegeSelection(selectedCollege = selectedCollege, onCollegeSelected = { selectedCollege = it }, onNext = { currentStep = 4 })
-                                4 -> StepHostelSelection(selectedCollege = selectedCollege, gender = gender, selectedHostel = selectedHostel, onHostelSelected = { selectedHostel = it }, onNext = {
-                                    if (isAlreadyLoggedIn) {
-                                        currentStep = 6
-                                    } else {
-                                        currentStep = 5
-                                    }
-                                })
-                                5 -> StepBasicDetails(fullName = fullName, onNameChanged = { fullName = it }, email = email, onEmailChanged = { email = it }, phone = phone, onPhoneChanged = { phone = it }, password = password, onPasswordChanged = { password = it }, confirmPassword = confirmPassword, onConfirmChanged = { confirmPassword = it }, onNext = { currentStep = 6 })
-                                6 -> StepAcademicDetails(selectedCollege = selectedCollege, course = selectedCourse, onCourseChanged = { selectedCourse = it }, branch = selectedBranch, onBranchChanged = { selectedBranch = it }, year = selectedYear, onYearChanged = { selectedYear = it }, semester = selectedSemester, onSemesterChanged = { selectedSemester = it }, selectedSchool = selectedSchool, onSchoolChanged = { selectedSchool = it }, onNext = { currentStep = 7 })
-                                7 -> StepAccommodationSetup(gender = gender, selectedCollege = selectedCollege, lookingFor = lookingFor, onLookingForChanged = { lookingFor = it }, preferredHostel = preferredHostel, onPreferredChanged = { preferredHostel = it }, currentHostel = currentHostel, onCurrentChanged = { currentHostel = it }, roomNumber = currentRoomNumber, onRoomChanged = { currentRoomNumber = it }, moveInDate = moveInDate, onMoveInChanged = { moveInDate = it }, onNext = { currentStep = 8 })
-                                8 -> StepLifestylePreferences(
-                                    foodPref = foodPref, onFoodChanged = { foodPref = it },
-                                    sleepSchedule = sleepSchedule, onSleepChanged = { sleepSchedule = it },
-                                    studyHabits = studyHabits, onStudyChanged = { studyHabits = it },
-                                    cleanliness = cleanliness, onCleanlinessChanged = { cleanliness = it },
-                                    smoking = smokingPref, onSmokingChanged = { smokingPref = it },
-                                    drinking = drinkingPref, onDrinkingChanged = { drinkingPref = it },
-                                    guests = guestsPref, onGuestsChanged = { guestsPref = it },
-                                    wakeUpTime = wakeUpTime, onWakeUpChanged = { wakeUpTime = it },
-                                    roomEnvironment = roomEnvironment, onRoomEnvChanged = { roomEnvironment = it },
-                                    personalityType = personalityType, onPersonalityChanged = { personalityType = it },
-                                    dailyRoutine = dailyRoutine, onDailyRoutineChanged = { dailyRoutine = it },
-                                    workStyle = workStyle, onWorkStyleChanged = { workStyle = it },
-                                    onNext = { currentStep = 9 }
-                                )
-                                9 -> StepInterestsSelection(
-                                    selectedInterests = selectedInterests, onInterestsChanged = { selectedInterests = it },
-                                    selectedDealBreakers = selectedDealBreakers, onDealBreakersChanged = { selectedDealBreakers = it },
-                                    selectedRoomPurposes = selectedRoomPurposes, onRoomPurposesChanged = { selectedRoomPurposes = it },
-                                    onNext = { currentStep = 10 }
-                                )
-                                10 -> StepBudgetAndBio(selectedLanguages = selectedLanguages, onLanguagesChanged = { selectedLanguages = it }, hometown = hometownState, onHometownChanged = { hometownState = it }, isForeign = foreignNational, onForeignChanged = { foreignNational = it }, bio = userBio, onBioChanged = { userBio = it }, onNext = { currentStep = 11 })
-                                11 -> StepAICompatibilityCalculation(
-                                    isLoading = isLoading,
-                                    errorMessage = errorMessage,
-                                    onComplete = {
-                                        isLoading = true
-                                        errorMessage = null
-                                        coroutineScope.launch {
-                                            try {
-                                                // 1. Register User if not already logged in
-                                                if (!isAlreadyLoggedIn) {
-                                                    HomigoRepository.register(
-                                                        mapOf(
-                                                            "name" to fullName,
-                                                            "email" to email,
-                                                            "password" to password,
-                                                            "gender" to gender
-                                                        )
-                                                    )
-                                                }
-                                                
-                                                // 2. Submit Profile Details
-                                                val profilePayload = mapOf(
-                                                    "college" to selectedCollege,
-                                                    "hostel" to selectedHostel,
-                                                    "room_preference" to roomPreference,
-                                                    "course" to selectedCourse,
-                                                    "branch" to selectedBranch,
-                                                    "year" to selectedYear,
-                                                    "semester" to selectedSemester,
-                                                    "roll_number" to rollNumber,
-                                                    "school" to selectedSchool,
-                                                    "looking_for" to lookingFor,
-                                                    "preferred_hostel" to preferredHostel,
-                                                    "current_hostel" to currentHostel,
-                                                    "room_number" to currentRoomNumber,
-                                                    "move_in_date" to moveInDate,
-                                                    "interests" to selectedInterests.toList(),
-                                                    "languages" to selectedLanguages.toList(),
-                                                    "hometown" to hometownState,
-                                                    "budget_min" to if (monthlyBudget.contains("2000")) 2000 else if (monthlyBudget.contains("4000")) 4000 else 6000,
-                                                    "budget_max" to if (monthlyBudget.contains("2000")) 4000 else if (monthlyBudget.contains("4000")) 6000 else 15000,
-                                                    "sleep_schedule" to (if (sleepSchedule.contains("Early")) "early_bird" else if (sleepSchedule.contains("Night")) "night_owl" else "flexible"),
-                                                    "smoking" to (if (smokingPref.contains("Never")) "no" else if (smokingPref.contains("Occasionally")) "occasionally" else "yes"),
-                                                    "drinking" to (if (drinkingPref.contains("Never")) "no" else if (drinkingPref.contains("Occasionally")) "occasionally" else "yes"),
-                                                    "food_preference" to (if (foodPref.contains("Vegetarian")) "veg" else if (foodPref.contains("Non-Vegetarian") || foodPref.contains("Non Vegetarian")) "non_veg" else "any"),
-                                                    "cleanliness" to (if (cleanliness.contains("Very")) "high" else if (cleanliness.contains("Moderately")) "moderate" else "low"),
-                                                    "pets" to "no",
-                                                    "guests" to (if (guestsPref.contains("Frequently")) "frequent" else if (guestsPref.contains("Occasionally")) "rare" else "no"),
-                                                    "bio" to userBio,
-                                                    "deal_breakers" to selectedDealBreakers.toList(),
-                                                    "room_purpose" to selectedRoomPurposes.toList(),
-                                                    "wake_up_time" to wakeUpTime,
-                                                    "study_style" to studyHabits,
-                                                    "room_environment" to roomEnvironment,
-                                                    "personality_type" to personalityType,
-                                                    "daily_routine" to dailyRoutine,
-                                                    "work_style" to workStyle
-                                                )
-                                                HomigoRepository.updateProfile(profilePayload)
-                                                isLoading = false
-                                                onOnboardingComplete()
-                                            } catch (e: Exception) {
-                                                isLoading = false
-                                                errorMessage = HomigoRepository.getErrorMessage(e)
+                            // Back Button with Glassmorphism
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(alpha = 0.6f))
+                                    .border(1.dp, Color.White.copy(alpha = 0.8f), CircleShape)
+                                    .shadow(elevation = 1.dp, shape = CircleShape)
+                                    .clickable {
+                                        if (currentStep > 1) {
+                                            if (currentStep == 5 && isAlreadyLoggedIn) {
+                                                currentStep = 3
+                                            } else {
+                                                currentStep--
                                             }
                                         }
-                                    }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = Color(0xFF1E293B),
+                                    modifier = Modifier.size(18.dp)
                                 )
+                            }
+
+                            // Glass Capsule Progress track
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(12.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color.White.copy(alpha = 0.5f))
+                                    .border(1.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .fillMaxWidth(animatedProgress)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(
+                                            Brush.horizontalGradient(
+                                                colors = listOf(Color(0xFF2563EB), Color(0xFF38BDF8))
+                                            )
+                                        )
+                                )
+                            }
+
+                            // Step Badge
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFF2563EB).copy(alpha = 0.1f))
+                                    .border(1.dp, Color(0xFF2563EB).copy(alpha = 0.2f), RoundedCornerShape(10.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "$currentStep/10",
+                                    color = Color(0xFF2563EB),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    // Main screen transitions container
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    ) {
+                        AnimatedContent(
+                            targetState = currentStep,
+                            transitionSpec = {
+                                if (targetState > initialState) {
+                                    slideInHorizontally(animationSpec = tween(400)) { width -> width } + fadeIn() togetherWith
+                                            slideOutHorizontally(animationSpec = tween(400)) { width -> -width } + fadeOut()
+                                } else {
+                                    slideInHorizontally(animationSpec = tween(400)) { width -> -width } + fadeIn() togetherWith
+                                            slideOutHorizontally(animationSpec = tween(400)) { width -> width } + fadeOut()
+                                }
+                            }
+                        ) { targetStep ->
+                            val scrollState = rememberScrollState()
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .then(
+                                        if (targetStep == 1 || targetStep == 2) Modifier else Modifier.verticalScroll(scrollState)
+                                    ),
+                                verticalArrangement = Arrangement.Top,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                when (targetStep) {
+                                    1 -> StepWelcome(
+                                        gender = gender,
+                                        onGenderChanged = { gender = it },
+                                        onStart = { currentStep = 2 },
+                                        onNavigateToLogin = onNavigateToLogin
+                                    )
+                                    2 -> StepCollegeSelection(selectedCollege = selectedCollege, onCollegeSelected = { selectedCollege = it }, onNext = { currentStep = 3 })
+                                    3 -> StepHostelSelection(selectedCollege = selectedCollege, gender = gender, selectedHostel = selectedHostel, onHostelSelected = { selectedHostel = it }, onNext = {
+                                        if (isAlreadyLoggedIn) {
+                                            currentStep = 5
+                                        } else {
+                                            currentStep = 4
+                                        }
+                                    })
+                                    4 -> StepBasicDetails(fullName = fullName, onNameChanged = { fullName = it }, email = email, onEmailChanged = { email = it }, phone = phone, onPhoneChanged = { phone = it }, password = password, onPasswordChanged = { password = it }, confirmPassword = confirmPassword, onConfirmChanged = { confirmPassword = it }, onNext = { currentStep = 5 })
+                                    5 -> StepAcademicDetails(selectedCollege = selectedCollege, course = selectedCourse, onCourseChanged = { selectedCourse = it }, branch = selectedBranch, onBranchChanged = { selectedBranch = it }, year = selectedYear, onYearChanged = { selectedYear = it }, semester = selectedSemester, onSemesterChanged = { selectedSemester = it }, selectedSchool = selectedSchool, onSchoolChanged = { selectedSchool = it }, onNext = { currentStep = 6 })
+                                    6 -> StepAccommodationSetup(gender = gender, selectedCollege = selectedCollege, lookingFor = lookingFor, onLookingForChanged = { lookingFor = it }, preferredHostel = preferredHostel, onPreferredChanged = { preferredHostel = it }, currentHostel = currentHostel, onCurrentChanged = { currentHostel = it }, roomNumber = currentRoomNumber, onRoomChanged = { currentRoomNumber = it }, moveInDate = moveInDate, onMoveInChanged = { moveInDate = it }, onNext = { currentStep = 7 })
+                                    7 -> StepLifestylePreferences(
+                                        foodPref = foodPref, onFoodChanged = { foodPref = it },
+                                        sleepSchedule = sleepSchedule, onSleepChanged = { sleepSchedule = it },
+                                        studyHabits = studyHabits, onStudyChanged = { studyHabits = it },
+                                        cleanliness = cleanliness, onCleanlinessChanged = { cleanliness = it },
+                                        smoking = smokingPref, onSmokingChanged = { smokingPref = it },
+                                        drinking = drinkingPref, onDrinkingChanged = { drinkingPref = it },
+                                        guests = guestsPref, onGuestsChanged = { guestsPref = it },
+                                        wakeUpTime = wakeUpTime, onWakeUpChanged = { wakeUpTime = it },
+                                        roomEnvironment = roomEnvironment, onRoomEnvChanged = { roomEnvironment = it },
+                                        personalityType = personalityType, onPersonalityChanged = { personalityType = it },
+                                        dailyRoutine = dailyRoutine, onDailyRoutineChanged = { dailyRoutine = it },
+                                        workStyle = workStyle, onWorkStyleChanged = { workStyle = it },
+                                        onNext = { currentStep = 8 }
+                                    )
+                                    8 -> StepInterestsSelection(
+                                        selectedInterests = selectedInterests, onInterestsChanged = { selectedInterests = it },
+                                        selectedDealBreakers = selectedDealBreakers, onDealBreakersChanged = { selectedDealBreakers = it },
+                                        selectedRoomPurposes = selectedRoomPurposes, onRoomPurposesChanged = { selectedRoomPurposes = it },
+                                        onNext = { currentStep = 9 }
+                                    )
+                                    9 -> StepBudgetAndBio(selectedLanguages = selectedLanguages, onLanguagesChanged = { selectedLanguages = it }, hometown = hometownState, onHometownChanged = { hometownState = it }, isForeign = foreignNational, onForeignChanged = { foreignNational = it }, bio = userBio, onBioChanged = { userBio = it }, onNext = { currentStep = 10 })
+                                    10 -> StepAICompatibilityCalculation(
+                                        isLoading = isLoading,
+                                        errorMessage = errorMessage,
+                                        onComplete = {
+                                            isLoading = true
+                                            errorMessage = null
+                                            coroutineScope.launch {
+                                                try {
+                                                    // 1. Register User if not already logged in
+                                                    if (!isAlreadyLoggedIn) {
+                                                        HomigoRepository.register(
+                                                            mapOf(
+                                                                "name" to fullName,
+                                                                "email" to email,
+                                                                "password" to password,
+                                                                "gender" to gender
+                                                            )
+                                                        )
+                                                    }
+                                                    
+                                                    // 2. Submit Profile Details
+                                                    val profilePayload = mapOf(
+                                                        "college" to selectedCollege,
+                                                        "hostel" to selectedHostel,
+                                                        "room_preference" to roomPreference,
+                                                        "course" to selectedCourse,
+                                                        "branch" to selectedBranch,
+                                                        "year" to selectedYear,
+                                                        "semester" to selectedSemester,
+                                                        "roll_number" to rollNumber,
+                                                        "school" to selectedSchool,
+                                                        "looking_for" to lookingFor,
+                                                        "preferred_hostel" to preferredHostel,
+                                                        "current_hostel" to currentHostel,
+                                                        "room_number" to currentRoomNumber,
+                                                        "move_in_date" to moveInDate,
+                                                        "interests" to selectedInterests.toList(),
+                                                        "languages" to selectedLanguages.toList(),
+                                                        "hometown" to hometownState,
+                                                        "budget_min" to if (monthlyBudget.contains("2000")) 2000 else if (monthlyBudget.contains("4000")) 4000 else 6000,
+                                                        "budget_max" to if (monthlyBudget.contains("2000")) 4000 else if (monthlyBudget.contains("4000")) 6000 else 15000,
+                                                        "sleep_schedule" to (if (sleepSchedule.contains("Early")) "early_bird" else if (sleepSchedule.contains("Night")) "night_owl" else "flexible"),
+                                                        "smoking" to (if (smokingPref.contains("Never")) "no" else if (smokingPref.contains("Occasionally")) "occasionally" else "yes"),
+                                                        "drinking" to (if (drinkingPref.contains("Never")) "no" else if (drinkingPref.contains("Occasionally")) "occasionally" else "yes"),
+                                                        "food_preference" to (if (foodPref.contains("Vegetarian")) "veg" else if (foodPref.contains("Non-Vegetarian") || foodPref.contains("Non Vegetarian")) "non_veg" else "any"),
+                                                        "cleanliness" to (if (cleanliness.contains("Very")) "high" else if (cleanliness.contains("Moderately")) "moderate" else "low"),
+                                                        "pets" to "no",
+                                                        "guests" to (if (guestsPref.contains("Frequently")) "frequent" else if (guestsPref.contains("Occasionally")) "rare" else "no"),
+                                                        "bio" to userBio,
+                                                        "deal_breakers" to selectedDealBreakers.toList(),
+                                                        "room_purpose" to selectedRoomPurposes.toList(),
+                                                        "wake_up_time" to wakeUpTime,
+                                                        "study_style" to studyHabits,
+                                                        "room_environment" to roomEnvironment,
+                                                        "personality_type" to personalityType,
+                                                        "daily_routine" to dailyRoutine,
+                                                        "work_style" to workStyle
+                                                    )
+                                                    HomigoRepository.updateProfile(profilePayload)
+                                                    isLoading = false
+                                                    onOnboardingComplete()
+                                                } catch (e: Exception) {
+                                                    isLoading = false
+                                                    errorMessage = HomigoRepository.getErrorMessage(e)
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -1618,126 +1655,7 @@ fun PremiumGenderSelectionCard(
     }
 }
 
-@Composable
-private fun StepGenderSelection(gender: String, onGenderChanged: (String) -> Unit, onNext: () -> Unit) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val buttonScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1.0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-        label = "btnScale"
-    )
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        // AI themed graphics/illustration
-        AISparkleIllustration()
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Tell us about yourself",
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E293B),
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = "This helps our AI recommend the most compatible roommates for you.",
-                fontSize = 15.sp,
-                color = Color(0xFF64748B),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Male Selection Card
-        PremiumGenderSelectionCard(
-            selected = gender == "male",
-            onClick = { onGenderChanged("male") }
-        ) {
-            GenderIllustration(isFemale = false, isSelected = gender == "male")
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = "Male Student",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = if (gender == "male") Color(0xFF2563EB) else Color(0xFF1E293B)
-            )
-        }
-
-        // Female Selection Card
-        PremiumGenderSelectionCard(
-            selected = gender == "female",
-            onClick = { onGenderChanged("female") }
-        ) {
-            GenderIllustration(isFemale = true, isSelected = gender == "female")
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = "Female Student",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = if (gender == "female") Color(0xFF2563EB) else Color(0xFF1E293B)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Continue Button
-        AnimatedVisibility(
-            visible = gender.isNotBlank(),
-            enter = slideInVertically { it / 2 } + fadeIn(),
-            exit = slideOutVertically { it / 2 } + fadeOut()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .graphicsLayer(scaleX = buttonScale, scaleY = buttonScale)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(Color(0xFF2563EB), Color(0xFF1D4ED8))
-                        )
-                    )
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = rememberRipple(bounded = true, color = Color.White),
-                        onClick = onNext
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "Continue",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = Icons.Default.ArrowForward,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
-    }
-}
 
 private fun getCollegeAbbreviation(name: String): String {
     val trimmed = name.trim()
@@ -3638,3 +3556,76 @@ private fun StepAICompatibilityCalculation(
         }
     }
 }
+
+@Composable
+fun LiquidGlassBackground(currentStep: Int, modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
+    if (currentStep == 1) {
+        Box(modifier = modifier.fillMaxSize()) { content() }
+    } else {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(Color(0xFFF8FAFC))
+        ) {
+            // Soft glowing light aurora 1 (Teal/Cyan)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .fillMaxHeight(0.6f)
+                    .align(Alignment.TopStart)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(Color(0x1F38BDF8), Color(0x0038BDF8)),
+                            radius = 900f
+                        )
+                    )
+            )
+            // Soft glowing light aurora 2 (Pink/Rose)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .fillMaxHeight(0.6f)
+                    .align(Alignment.BottomEnd)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(Color(0x15F43F5E), Color(0x00F43F5E)),
+                            radius = 900f
+                        )
+                    )
+            )
+            // Soft glowing light aurora 3 (Royal Blue)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .fillMaxHeight(0.5f)
+                    .align(Alignment.Center)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(Color(0x152563EB), Color(0x002563EB)),
+                            radius = 700f
+                        )
+                    )
+            )
+
+            // Translucent dotted grid pattern for depth
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val dotSpacing = 20.dp.toPx()
+                val dotRadius = 1.dp.toPx()
+                val rows = (size.height / dotSpacing).toInt()
+                val cols = (size.width / dotSpacing).toInt()
+                for (r in 0..rows) {
+                    for (c in 0..cols) {
+                        drawCircle(
+                            color = Color.Black.copy(alpha = 0.025f),
+                            radius = dotRadius,
+                            center = Offset(c * dotSpacing, r * dotSpacing)
+                        )
+                    }
+                }
+            }
+
+            Box(modifier = Modifier.fillMaxSize(), content = content)
+        }
+    }
+}
+
