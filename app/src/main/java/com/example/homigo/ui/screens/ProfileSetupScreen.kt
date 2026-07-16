@@ -1,5 +1,9 @@
 package com.example.homigo.ui.screens
 
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -8,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
@@ -18,6 +23,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.style.TextAlign
 import com.example.homigo.ui.theme.*
 import androidx.compose.material3.*
@@ -223,23 +229,21 @@ fun ProfileSetupScreen(
 
     val context = androidx.compose.ui.platform.LocalContext.current
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Profile Setup", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            )
-        }
-    ) { innerPadding ->
+    val completionState = HomigoRepository.profileCompletion.collectAsState()
+    val completion = completionState.value
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF8FAFC))
+    ) {
+        // 1. Scrollable Content (Underneath the floating header)
         Column(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
+                .padding(horizontal = 20.dp)
+                .padding(top = 220.dp, bottom = 20.dp), // Height of overlapping floating glass header + padding
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             
@@ -1032,6 +1036,190 @@ fun ProfileSetupScreen(
                     }
                 }
             )
+        }
+
+        // 2. Floating VisionOS Liquid Glass Header
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .shadow(
+                    elevation = 12.dp,
+                    shape = RoundedCornerShape(26.dp),
+                    clip = false,
+                    ambientColor = Color(0xFFF472B6).copy(alpha = 0.25f),
+                    spotColor = Color(0xFF8B5CF6).copy(alpha = 0.25f)
+                )
+        ) {
+            // Mesh Gradient with Pink, Lavender, Coral, Peach
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(26.dp))
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFFF472B6), // Pink
+                                Color(0xFFC084FC), // Lavender
+                                Color(0xFFFDBA74), // Coral/Peach
+                                Color(0xFFFECACA)  // Light Peach
+                            )
+                        )
+                    )
+            ) {
+                // Soft glowing light blobs behind the glass
+                Box(
+                    modifier = Modifier
+                        .size(140.dp)
+                        .align(Alignment.TopStart)
+                        .offset(x = (-30).dp, y = (-20).dp)
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(Color.White.copy(alpha = 0.4f), Color.Transparent),
+                                radius = 250f
+                            )
+                        )
+                )
+                Box(
+                    modifier = Modifier
+                        .size(160.dp)
+                        .align(Alignment.BottomEnd)
+                        .offset(x = 20.dp, y = 30.dp)
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(Color(0xFFFF80B5).copy(alpha = 0.4f), Color.Transparent),
+                                radius = 300f
+                            )
+                        )
+                )
+            }
+
+            // Translucent Frosted Glass container overlay (14% frosted white, thin glossy border)
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(26.dp))
+                    .background(Color.White.copy(alpha = 0.14f))
+                    .border(
+                        width = 1.dp,
+                        brush = Brush.verticalGradient(
+                            listOf(Color.White.copy(alpha = 0.45f), Color.White.copy(alpha = 0.15f))
+                        ),
+                        shape = RoundedCornerShape(26.dp)
+                    )
+            )
+
+            // Animated light reflection gloss swipe
+            val transition = rememberInfiniteTransition(label = "glossSheen")
+            val sheenOffset by transition.animateFloat(
+                initialValue = -600f,
+                targetValue = 1200f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 5000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart
+                ),
+                label = "sheenOffset"
+            )
+
+            Canvas(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(26.dp))
+            ) {
+                drawRect(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.White.copy(alpha = 0.2f),
+                            Color.Transparent
+                        ),
+                        start = Offset(sheenOffset, 0f),
+                        end = Offset(sheenOffset + 250f, size.height)
+                    )
+                )
+            }
+
+            // Header Content
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Profile Setup",
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White,
+                            letterSpacing = (-0.5).sp
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        
+                        // Calculate step dynamically based on completion (e.g. 10 stages)
+                        val stepIndex = ((completion / 10) + 1).coerceIn(1, 10)
+                        Text(
+                            text = "Step $stepIndex of 10 • Build your roommate profile",
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    }
+
+                    // Floating Glass sparkles icon button
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.25f))
+                            .border(1.dp, Color.White.copy(alpha = 0.5f), CircleShape)
+                            .clickable {
+                                // optional interaction
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("✨", fontSize = 18.sp)
+                    }
+                }
+
+                // Premium capsule progress bar indicator
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color.White.copy(alpha = 0.25f))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth((completion / 100f).coerceIn(0.05f, 1f))
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        Color(0xFFEC4899), // Hot Pink
+                                        Color(0xFF8B5CF6), // Purple
+                                        Color(0xFF3B82F6)  // Blue
+                                    )
+                                )
+                            )
+                            .shadow(
+                                elevation = 4.dp,
+                                shape = RoundedCornerShape(4.dp),
+                                clip = false,
+                                ambientColor = Color(0xFFEC4899),
+                                spotColor = Color(0xFF8B5CF6)
+                            )
+                    )
+                }
+            }
         }
     }
 }
