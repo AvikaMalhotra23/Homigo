@@ -133,58 +133,145 @@ fun HomeScreen(
 
     FloatingBackground(gender = gender, completion = completion) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header Bar
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = Color.White.copy(alpha = 0.85f),
-                border = BorderStroke(width = 0.5.dp, color = Color.Black.copy(alpha = 0.05f))
+            // Liquid Glass Welcome Header
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Transparent)
             ) {
-                Row(
+                Box(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .statusBarsPadding()
-                        .padding(horizontal = 24.dp, vertical = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(Color.White.copy(alpha = 0.55f))
+                        .border(
+                            width = 1.dp,
+                            brush = Brush.verticalGradient(
+                                listOf(Color.White.copy(alpha = 0.7f), Color.White.copy(alpha = 0.15f))
+                            ),
+                            shape = RoundedCornerShape(24.dp)
+                        )
+                        .padding(20.dp)
                 ) {
-                    Column {
-                        Text(
-                            text = greeting.uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = activeAccent,
-                            letterSpacing = 1.sp
-                        )
-                        Text(
-                            text = dashboard?.userName ?: "Harshit",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Graphite
-                        )
-                    }
-
-                    // Notification Trigger
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .shadow(2.dp, CircleShape)
-                            .background(Color.White.copy(alpha = 0.9f), CircleShape)
-                            .clickable { onNavigateToRequests() },
-                        contentAlignment = Alignment.Center
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.Notifications,
-                            contentDescription = "Notifications",
-                            tint = activeAccent,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        if (requestsResponse?.incoming?.isNotEmpty() == true) {
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(4.dp)
-                                    .size(8.dp)
-                                    .background(Color.Red, CircleShape)
+                        Column(modifier = Modifier.weight(1f)) {
+                            // personalized greeting
+                            Text(
+                                text = "$greeting, ${myProfile?.name?.substringBefore(" ") ?: dashboard?.userName ?: "Harshit"} 👋",
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0F172A),
+                                letterSpacing = (-0.5).sp
                             )
+                            
+                            Spacer(modifier = Modifier.height(4.dp))
+                            
+                            // Badge & Subtitle details
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                if (myProfile?.is_verified == 1) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color(0xFF2563EB).copy(alpha = 0.1f))
+                                            .border(0.5.dp, Color(0xFF2563EB).copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.CheckCircle,
+                                                contentDescription = "Verified student",
+                                                tint = Color(0xFF2563EB),
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                            Text(
+                                                text = "Verified Student",
+                                                color = Color(0xFF2563EB),
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color(0xFFE2E8F0))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = "Student",
+                                            color = Color(0xFF475569),
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                                
+                                Text(
+                                    text = myProfile?.college ?: "University",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF334155),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            // Hostel, Course, Year info chip details
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                val hostelVal = myProfile?.hostel?.uppercase() ?: "Not Assigned"
+                                val courseVal = myProfile?.course ?: "N/A"
+                                val yearVal = myProfile?.year ?: "N/A"
+                                
+                                InfoTag(label = "Hostel $hostelVal")
+                                InfoTag(label = courseVal)
+                                InfoTag(label = "$yearVal Year")
+                            }
+                        }
+
+                        // Notification Trigger
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.8f))
+                                .border(1.dp, Color.White.copy(alpha = 0.9f), CircleShape)
+                                .shadow(elevation = 2.dp, shape = CircleShape)
+                                .clickable { onNavigateToRequests() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Notifications,
+                                contentDescription = "Notifications",
+                                tint = activeAccent,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            if (requestsResponse?.incoming?.isNotEmpty() == true) {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(4.dp)
+                                        .size(8.dp)
+                                        .background(Color.Red, CircleShape)
+                                )
+                            }
                         }
                     }
                 }
@@ -200,82 +287,48 @@ fun HomeScreen(
                     contentPadding = PaddingValues(bottom = 90.dp), // Clear bottom dock space
                     verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    // ─── 1. AI HERO COMMAND CENTER ───
+                    // ─── 1. STUDENT STATUS CARD ───
                     item {
                         Box(modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 20.dp)) {
-                            LiquidGlassCard(
-                                modifier = Modifier.fillMaxWidth(),
-                                density = GlassDensity.HIGH
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text("🤖", fontSize = 18.sp)
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = "HOMIGO AI",
-                                                fontWeight = FontWeight.ExtraBold,
-                                                fontSize = 11.sp,
-                                                color = activeAccent,
-                                                letterSpacing = 0.5.sp
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Text(
-                                            text = "You have ${dashboard?.topMatches?.size ?: 6} new compatible roommates today.",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp,
-                                            color = Graphite
-                                        )
-                                        Text(
-                                            text = "92% Average Compatibility",
-                                            fontWeight = FontWeight.Medium,
-                                            fontSize = 12.sp,
-                                            color = SecondaryText,
-                                            modifier = Modifier.padding(top = 2.dp)
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                LiquidGlassButton(
-                                    text = "Discover Matches",
-                                    onClick = onNavigateToDiscover,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-
-                                Spacer(modifier = Modifier.height(14.dp))
-
-                                // Inline Onboarding Tracker
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "Profile Completed: $completion%",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Graphite.copy(alpha = 0.7f)
-                                    )
-                                    Text(
-                                        text = "Continue →",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = activeAccent,
-                                        modifier = Modifier.clickable { onCompleteProfileClick() }
-                                    )
-                                }
-                            }
+                            StudentStatusCard(
+                                completion = completion,
+                                isVerified = myProfile?.is_verified == 1,
+                                pendingRequestsCount = requestsResponse?.incoming?.size ?: 0,
+                                activeAccent = activeAccent,
+                                onCompleteProfileClick = onCompleteProfileClick,
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                     }
 
-                    // ─── 2. TODAY'S AI BRIEF ───
+                    // ─── 2. MY ROOMMATE JOURNEY CARD ───
+                    item {
+                        Box(modifier = Modifier.padding(horizontal = 24.dp)) {
+                            RoommateJourneyCard(
+                                completion = completion,
+                                isVerified = myProfile?.is_verified == 1,
+                                hasChats = chatList.isNotEmpty(),
+                                hasMatches = (dashboard?.topMatches?.isNotEmpty() == true),
+                                onNavigateToDiscover = onNavigateToDiscover,
+                                onCompleteProfileClick = onCompleteProfileClick,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    // ─── 3. COMPATIBILITY PREFERENCES CARD ───
+                    item {
+                        Box(modifier = Modifier.padding(horizontal = 24.dp)) {
+                            CompatibilityPreferencesCard(
+                                profile = myProfile,
+                                activeAccent = activeAccent,
+                                onClick = onCompleteProfileClick,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    // ─── 4. TODAY'S AI BRIEF ───
                     item {
                         Column(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
@@ -921,3 +974,565 @@ private fun PresenceCounter(count: Int, label: String) {
         )
     }
 }
+
+@Composable
+fun InfoTag(label: String) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.Black.copy(alpha = 0.04f))
+            .border(0.5.dp, Color.Black.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+            .padding(horizontal = 8.dp, vertical = 3.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color(0xFF475569)
+        )
+    }
+}
+
+@Composable
+fun StudentStatusCard(
+    completion: Int,
+    isVerified: Boolean,
+    pendingRequestsCount: Int,
+    activeAccent: Color,
+    onCompleteProfileClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val readinessScore = remember(completion) {
+        ((completion * 0.95).toInt() + 5).coerceIn(5, 99)
+    }
+
+    LiquidGlassCard(
+        modifier = modifier,
+        density = GlassDensity.HIGH
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("🛡️", fontSize = 20.sp)
+                    Text(
+                        text = "STUDENT STATUS",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 12.sp,
+                        color = Color(0xFF475569),
+                        letterSpacing = 0.5.sp
+                    )
+                }
+
+                if (completion < 100) {
+                    Text(
+                        text = "Complete Profile →",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = activeAccent,
+                        modifier = Modifier.clickable { onCompleteProfileClick() }
+                    )
+                }
+            }
+
+            // 2x2 Clean Metrics Grid
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Metric 1: Profile Completion
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White.copy(alpha = 0.3f))
+                        .border(0.5.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Small circular progress
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                progress = completion / 100f,
+                                strokeWidth = 3.dp,
+                                color = activeAccent,
+                                trackColor = Color.Black.copy(alpha = 0.05f)
+                            )
+                            Text(
+                                text = "$completion%",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0F172A)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = "Profile Setup",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF64748B)
+                            )
+                            Text(
+                                text = if (completion >= 100) "Completed" else "In Progress",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0F172A)
+                            )
+                        }
+                    }
+                }
+
+                // Metric 2: Verification Status
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White.copy(alpha = 0.3f))
+                        .border(0.5.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(if (isVerified) Color(0xFF22C55E).copy(alpha = 0.1f) else Color(0xFFE2E8F0)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (isVerified) Icons.Filled.CheckCircle else Icons.Filled.Info,
+                                contentDescription = null,
+                                tint = if (isVerified) Color(0xFF22C55E) else Color(0xFF64748B),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = "Verification",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF64748B)
+                            )
+                            Text(
+                                text = if (isVerified) "Verified" else "Pending",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isVerified) Color(0xFF15803D) else Color(0xFF0F172A)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Metric 3: Roommate Readiness Score
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White.copy(alpha = 0.3f))
+                        .border(0.5.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF38BDF8).copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "$readinessScore",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color(0xFF0284C7)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = "Readiness",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF64748B)
+                            )
+                            Text(
+                                text = "Score",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0F172A)
+                            )
+                        }
+                    }
+                }
+
+                // Metric 4: Pending Requests
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White.copy(alpha = 0.3f))
+                        .border(0.5.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(if (pendingRequestsCount > 0) Color(0xFFEF4444).copy(alpha = 0.1f) else Color(0xFFE2E8F0)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "$pendingRequestsCount",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Black,
+                                color = if (pendingRequestsCount > 0) Color(0xFFEF4444) else Color(0xFF64748B)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = "Pending",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF64748B)
+                            )
+                            Text(
+                                text = if (pendingRequestsCount == 1) "1 Request" else "$pendingRequestsCount Requests",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0F172A)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RoommateJourneyCard(
+    completion: Int,
+    isVerified: Boolean,
+    hasChats: Boolean,
+    hasMatches: Boolean,
+    onNavigateToDiscover: () -> Unit,
+    onCompleteProfileClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Determine the active step (1-indexed: 1 to 6)
+    val activeStep = when {
+        completion < 100 -> 2 // Step 2: Complete Preferences
+        !isVerified -> 3 // Step 3: Verification
+        !hasChats && !hasMatches -> 4 // Step 4: Waiting for Compatible Students
+        !hasChats -> 5 // Step 5: Chat
+        else -> 6 // Step 6: Become Roommates
+    }
+
+    val steps = listOf(
+        "Create Profile" to "Account created successfully",
+        "Complete Preferences" to "Fill lifestyle & interest details",
+        "Verification" to "Verify student ID proof",
+        "Waiting for compatible students" to "AI finding roommate matches",
+        "Chat" to "Connect with compatible matches",
+        "Become Roommates" to "Confirm room & move in together"
+    )
+
+    LiquidGlassCard(
+        modifier = modifier,
+        density = GlassDensity.HIGH
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("✨", fontSize = 20.sp)
+                    Text(
+                        text = "MY ROOMMATE JOURNEY",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 12.sp,
+                        color = Color(0xFF475569),
+                        letterSpacing = 0.5.sp
+                    )
+                }
+
+                // CTA action depending on status
+                if (activeStep == 2) {
+                    Text(
+                        text = "Finish Setup →",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2563EB),
+                        modifier = Modifier.clickable { onCompleteProfileClick() }
+                    )
+                } else if (activeStep >= 4) {
+                    Text(
+                        text = "Find Matches →",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2563EB),
+                        modifier = Modifier.clickable { onNavigateToDiscover() }
+                    )
+                }
+            }
+
+            // Vertical Timeline
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                steps.forEachIndexed { index, (title, desc) ->
+                    val stepNum = index + 1
+                    val isCompleted = stepNum < activeStep
+                    val isActive = stepNum == activeStep
+                    val isMuted = stepNum > activeStep
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        // Timeline Left Indicator (Circle and Line)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.width(28.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        when {
+                                            isCompleted -> Color(0xFF22C55E)
+                                            isActive -> Color(0xFF2563EB)
+                                            else -> Color(0xFFE2E8F0)
+                                        }
+                                    )
+                                    .border(
+                                        width = 1.5.dp,
+                                        color = when {
+                                            isActive -> Color(0xFF93C5FD)
+                                            else -> Color.White
+                                        },
+                                        shape = CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isCompleted) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                } else {
+                                    Text(
+                                        text = "$stepNum",
+                                        color = if (isActive) Color.White else Color(0xFF94A3B8),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            // Vertical connecting line (only if not the last item)
+                            if (index < steps.size - 1) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(2.dp)
+                                        .height(28.dp)
+                                        .background(
+                                            if (isCompleted) Color(0xFF22C55E).copy(alpha = 0.5f)
+                                            else Color(0xFFE2E8F0)
+                                        )
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        // Step Text Info
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = title,
+                                fontSize = 14.sp,
+                                fontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.Bold,
+                                color = when {
+                                    isActive -> Color(0xFF0F172A)
+                                    isCompleted -> Color(0xFF334155)
+                                    else -> Color(0xFF94A3B8)
+                                }
+                            )
+                            Text(
+                                text = desc,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = when {
+                                    isActive -> Color(0xFF475569)
+                                    else -> Color(0xFF94A3B8)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun CompatibilityPreferencesCard(
+    profile: Profile?,
+    activeAccent: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val tags = remember(profile) {
+        val list = mutableListOf<String>()
+        if (profile != null) {
+            // Sleep Schedule
+            when (profile.sleep_schedule.lowercase()) {
+                "early_bird" -> list.add("Early Sleeper")
+                "night_owl" -> list.add("Night Owl")
+                else -> list.add("Flexible Sleeper")
+            }
+            // Food
+            when (profile.food_preference.lowercase()) {
+                "veg" -> list.add("Vegetarian")
+                "non_veg" -> list.add("Non-Vegetarian")
+                else -> list.add("Any Diet")
+            }
+            // Smoking
+            when (profile.smoking.lowercase()) {
+                "no" -> list.add("Non-Smoker")
+                "occasionally" -> list.add("Occasional Smoker")
+                else -> list.add("Smoker")
+            }
+            // Cleanliness
+            when (profile.cleanliness.lowercase()) {
+                "high" -> list.add("High Cleanliness")
+                "moderate" -> list.add("Moderate Cleanliness")
+                else -> list.add("Flexible Cleanliness")
+            }
+            // Budget
+            list.add("Budget: ₹${profile.budget_min}-${profile.budget_max}")
+            // Parsing interests
+            if (!profile.interests.isNullOrBlank()) {
+                try {
+                    val array = org.json.JSONArray(profile.interests)
+                    for (i in 0 until array.length()) {
+                        list.add(array.getString(i))
+                    }
+                } catch (e: Exception) {
+                    // ignore
+                }
+            }
+        } else {
+            // Default tags if profile not populated yet
+            list.addAll(listOf("Early Sleeper", "Vegetarian", "Non-Smoker", "Coding", "Gym", "Budget: ₹4k-6k", "Clean Room", "Morning Study"))
+        }
+        list
+    }
+
+    LiquidGlassCard(
+        modifier = modifier.clickable { onClick() },
+        density = GlassDensity.HIGH
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("⚙️", fontSize = 20.sp)
+                    Text(
+                        text = "COMPATIBILITY PREFERENCES",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 12.sp,
+                        color = Color(0xFF475569),
+                        letterSpacing = 0.5.sp
+                    )
+                }
+                
+                Text(
+                    text = "Edit →",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = activeAccent
+                )
+            }
+
+            // Glass Chips Grid
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                tags.forEach { tag ->
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White.copy(alpha = 0.4f))
+                            .border(0.5.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = tag,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF334155)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
